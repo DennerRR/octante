@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block titulo %}Entrar — Octante{% endblock %}
+{% block conteudo %}
+<section class="cartao caixa-login">
+  <img class="logo-entrada" src="{{ url_for('static', filename='marca/octante-logo.svg') }}" alt="Octante: gestão de projetos">
+  <h1>Entrar</h1>
+  {% if erro %}<p class="aviso-erro">{{ erro }}</p>{% endif %}
+  <form method="post">
+    <input type="hidden" name="proximo" value="{{ proximo }}">
+    <label>Usuário <input name="login" autocomplete="username" required autofocus></label>
+    <label>Senha <input type="password" name="senha" autocomplete="current-password" required></label>
+    <button class="botao" type="submit">Entrar</button>
+  </form>
+  <p class="pequeno mudo">Esqueceu a senha? Peça ao administrador do app para redefinir.</p>
+</section>
+{% endblock %}

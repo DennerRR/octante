@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}{{ 'Novo risco' if novo else r.rotulo }} — {{ projeto.nome }}{% endblock %}
+{% macro valor_num(v) -%}{{ ('%.2f'|format(v)).replace('.', ',') if v is number else '' }}{%- endmacro %}
+{% block conteudo %}
+<h1>{{ 'Registrar risco' if novo else 'Editar ' ~ r.rotulo }}</h1>
+<p class="sub">Só o título é obrigatório. Avalie, planeje a resposta e defina reservas agora ou depois.</p>
+
+<form method="post" class="formulario" id="form-risco">
+  <section class="cartao">
+    <h2>Identificação</h2>
+    <fieldset class="opcoes-abordagem">
+      <legend>Tipo</legend>
+      {% for k, v in pmbok.TIPOS_RISCO %}
+      <label class="check"><input type="radio" name="tipo" value="{{ k }}" {{ 'checked' if (r.tipo or 'ameaca') == k }} data-tipo> {{ v }}</label>
+      {% endfor %}
+    </fieldset>
+    <label>Título *<input name="titulo" required value="{{ r.titulo or '' }}" placeholder="Ex.: API do WhatsApp mudar a política de preços"></label>
+    <div class="grade-2">
+      <label>Causa <span class="ajuda">O que pode levar ao evento?</span><textarea name="causa" rows="2">{{ r.causa or '' }}</textarea></label>
+      <label>Efeito nos objetivos <span class="ajuda">Prazo, custo, escopo, qualidade, valor...</span><textarea name="efeito" rows="2">{{ r.efeito or '' }}</textarea></label>
+    </div>
+    <div class="grade-3">
+      <label>Fonte {{ m.opcoes('fonte', pmbok.FONTES_RISCO, r.fonte, vazio='—') }}</label>
+      <label>Responsável<input name="responsavel" value="{{ r.responsavel or '' }}" placeholder="Quem acompanha e responde"></label>
+      <label>Parte interessada relacionada
+        <select name="parte_id"><option value="">—</option>
+          {% for s in partes %}<option value="{{ s.id }}" {{ 'selected' if r.parte_id == s.id }}>{{ s.nome }}</option>{% endfor %}
+        </select>
+      </label>
+    </div>
+  </section>
+
+  <section class="cartao">
+    <h2>Avaliação</h2>
+    <div class="grade-4">
+      <label>Probabilidade
+        <select name="probabilidade"><option value="">—</option>
+          {% for n, rot, pct in pmbok.ESCALA_PROBABILIDADE %}<option value="{{ n }}" {{ 'selected' if r.probabilidade == n }}>{{ n }} · {{ rot }} (~{{ (pct * 100)|int }}%)</option>{% endfor %}
+        </select>
+      </label>
+      <label>Impacto
+        <select name="impacto"><option value="">—</option>
+          {% for n, rot in pmbok.ESCALA_IMPACTO %}<option value="{{ n }}" {{ 'selected' if r.impacto == n }}>{{ n }} · {{ rot }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Impacto em custo (R$) <span class="ajuda">Opcional, para o EMV</span>
+        <input name="impacto_custo" inputmode="decimal" value="{{ valor_num(r.impacto_custo) }}"></label>
+      <label>Impacto em prazo (dias)<input type="number" min="0" name="impacto_prazo_dias" value="{{ r.impacto_prazo_dias if r.impacto_prazo_dias is number else '' }}"></label>
+    </div>
+    <p class="mudo pequeno">Limite de risco do projeto: pontuação {{ projeto.limite_risco }}. EMV = probabilidade (%) × impacto em custo.</p>
+  </section>
+
+  <section class="cartao">
+    <h2>Resposta</h2>
+    {% for tipo, lista in pmbok.ESTRATEGIAS.items() %}
+    <fieldset class="estrategias" data-estrategias="{{ tipo }}" {{ 'hidden' if (r.tipo or 'ameaca') != tipo }}>
+      <legend>Estratégia para {{ 'ameaças' if tipo == 'ameaca' else 'oportunidades' }} <span class="fonte">seção {{ '2.8.5.1' if tipo == 'ameaca' else '2.8.5.2' }}</span></legend>
+      {% set marcada = r.estrategia if (r.tipo or 'ameaca') == tipo else '' %}
+      <label class="check"><input type="radio" name="estrategia_{{ tipo }}" value="" {{ 'checked' if not marcada }}> Ainda não definida</label>
+      {% for k, nome, desc in lista %}
+      <label class="check estrategia"><input type="radio" name="estrategia_{{ tipo }}" value="{{ k }}" {{ 'checked' if marcada == k }}>
+        <span><strong>{{ nome }}</strong> <span class="mudo">— {{ desc }}</span></span></label>
+      {% endfor %}
+    </fieldset>
+    {% endfor %}
+    <label>Plano de resposta<textarea name="plano_resposta" rows="2" placeholder="Ações concretas, com prazo">{{ r.plano_resposta or '' }}</textarea></label>
+    <div class="grade-2">
+      <label>Gatilho <span class="ajuda">Sinal de que o risco está para ocorrer</span><input name="gatilho" value="{{ r.gatilho or '' }}"></label>
+      <label>Plano de contingência <span class="ajuda">O que fazer se ocorrer (aceitação ativa)</span><input name="plano_contingencia" value="{{ r.plano_contingencia or '' }}"></label>
+    </div>
+    <div class="grade-2">
+      <label>Reserva de contingência (R$)<input name="reserva_custo" inputmode="decimal" value="{{ valor_num(r.reserva_custo) }}"></label>
+      <label>Reserva de contingência (dias)<input type="number" min="0" name="reserva_prazo_dias" value="{{ r.reserva_prazo_dias if r.reserva_prazo_dias is number else '' }}"></label>
+    </div>
+    <label>Riscos secundários e residuais <span class="ajuda">A resposta cria novos riscos? O que sobra depois dela?</span>
+      <textarea name="riscos_secundarios" rows="2">{{ r.riscos_secundarios or '' }}</textarea></label>
+    <label>Status {{ m.opcoes('status', pmbok.STATUS_RISCO, r.status or 'aberto') }}</label>
+  </section>
+
+  <div class="acoes barra-salvar">
+    <button class="botao" type="submit">{{ 'Registrar' if novo else 'Salvar' }}</button>
+    {% if novo %}<button class="botao botao-sec" type="submit" name="acao" value="outro">Registrar e adicionar outro</button>{% endif %}
+    <a class="botao botao-sec" href="{{ url_for('incerteza.riscos', projeto_id=projeto.id) if novo else url_for('incerteza.risco_detalhe', projeto_id=projeto.id, risco_id=r.id) }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

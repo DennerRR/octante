@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m14 with context %}
+{% block titulo %}Registro de riscos — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<div class="cabecalho">
+  <div>
+    <h1>Registro de riscos</h1>
+<p class="exportar-linha">{{ m14.exportar(projeto, 'riscos') }}</p>
+    <p class="sub">Artefato da seção 4.6.2: responsável, probabilidade, impacto, pontuação e respostas planejadas para cada risco.
+      Identifique riscos continuamente: reuniões diárias, demonstrações, reuniões de status e retrospectivas são boas fontes (seção 2.8.5.4).</p>
+  </div>
+  <a class="botao" href="{{ url_for('incerteza.risco_novo', projeto_id=projeto.id) }}">+ Registrar risco</a>
+</div>
+
+<form class="filtros" method="get">
+  <select name="tipo" data-enviar-ao-mudar aria-label="Tipo">
+    <option value="">Ameaças e oportunidades</option>
+    {% for k, v in pmbok.TIPOS_RISCO %}<option value="{{ k }}" {{ 'selected' if tipo == k }}>{{ v }}s</option>{% endfor %}
+  </select>
+  <select name="status" data-enviar-ao-mudar aria-label="Status">
+    <option value="ativos" {{ 'selected' if status == 'ativos' }}>Ativos (abertos e em resposta)</option>
+    <option value="todos" {{ 'selected' if status == 'todos' }}>Todos</option>
+    {% for k, v in pmbok.STATUS_RISCO %}<option value="{{ k }}" {{ 'selected' if status == k }}>{{ v }}</option>{% endfor %}
+  </select>
+  <noscript><button class="botao botao-sec" type="submit">Filtrar</button></noscript>
+</form>
+
+{% if riscos %}
+<section class="cartao">
+  <div class="tabela-rolagem">
+  <table class="tabela">
+    <thead><tr><th>Código</th><th>Risco</th><th>Tipo</th><th class="centro">P</th><th class="centro">I</th><th>Pontuação</th><th>Estratégia</th><th>Responsável</th><th>Status</th><th>Revisão</th></tr></thead>
+    <tbody>
+    {% for r in riscos %}
+      <tr class="{{ 'inativa' if not r.ativo }}">
+        <td><a href="{{ url_for('incerteza.risco_detalhe', projeto_id=projeto.id, risco_id=r.id) }}"><strong>{{ r.rotulo }}</strong></a></td>
+        <td><a href="{{ url_for('incerteza.risco_detalhe', projeto_id=projeto.id, risco_id=r.id) }}">{{ r.titulo }}</a>
+          {% if r.fonte %}<div class="mudo pequeno">{{ dict(pmbok.FONTES_RISCO)[r.fonte] }}</div>{% endif %}</td>
+        <td><span class="selo selo-tipo-{{ r.tipo }}">{{ dict(pmbok.TIPOS_RISCO)[r.tipo] }}</span></td>
+        <td class="centro">{{ r.probabilidade or '—' }}</td>
+        <td class="centro">{{ r.impacto or '—' }}</td>
+        <td>{% if r.nivel %}<span class="selo selo-nivel-{{ r.nivel }}">{{ r.pontuacao }} · {{ pmbok.NIVEIS_RISCO_NOME[r.nivel]|lower }}</span>{% else %}<span class="mudo">—</span>{% endif %}</td>
+        <td>{{ r.estrategia_nome or '—' }}</td>
+        <td>{{ r.responsavel or r.parte_nome or '—' }}</td>
+        <td>{{ dict(pmbok.STATUS_RISCO)[r.status] }}</td>
+        <td>{{ (r.revisado_em or r.identificado_em)|data_br }}{% if r.revisao_atrasada %} <span class="selo selo-opositor">atrasada</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% elif total %}
+<div class="vazio"><p>Nenhum risco com esses filtros.</p></div>
+{% else %}
+<div class="vazio">
+  <h2>Nenhum risco registrado</h2>
+  <p>Todos os projetos têm riscos. Comece pelas ameaças já percebidas na abertura e pense também em oportunidades:
+     eventos que, se acontecerem, ajudam o projeto.</p>
+  <a class="botao" href="{{ url_for('incerteza.risco_novo', projeto_id=projeto.id) }}">Registrar o primeiro risco</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block titulo %}Quadro — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+{% set destinos = {'a_fazer': [('em_andamento', 'Iniciar →')], 'em_andamento': [('a_fazer', '←'), ('concluido', 'Concluir →')], 'concluido': [('em_andamento', '← Reabrir'), ('aceito', 'Aceitar →')], 'aceito': []} %}
+<div class="cabecalho">
+  <div>
+    <h1>Quadro de tarefas</h1>
+    <p class="sub">Controle visual do trabalho (seção 2.7.3.3): mostra o que está pronto para começar, em andamento e concluído.
+      Só aparecem os itens sem decomposição.</p>
+  </div>
+  <a class="botao" href="{{ url_for('entrega.item_novo', projeto_id=projeto.id) }}">+ Item de escopo</a>
+</div>
+<div class="quadro">
+  {% for c in colunas %}
+  {% set acima = c.chave == 'em_andamento' and projeto.limite_wip and c.itens|length > projeto.limite_wip %}
+  <section class="coluna {{ 'coluna-acima' if acima }}">
+    <h2>{{ c.nome }} <span class="mudo">{{ c.itens|length }}{% if c.chave == 'em_andamento' and projeto.limite_wip %} / {{ projeto.limite_wip }}{% endif %}</span></h2>
+    {% if acima %}<p class="aviso-texto">Acima do limite: ajudem a terminar o que está em andamento antes de iniciar algo novo.</p>{% endif %}
+    {% for i in c.itens %}
+    <div class="cartao-item">
+      <a href="{{ url_for('entrega.item', projeto_id=projeto.id, item_id=i.id) }}"><strong>{{ i.rotulo }}</strong> {{ i.titulo }}</a>
+      <div class="mudo pequeno">
+        {% if i.estimativa %}{{ '%g'|format(i.estimativa) }} {{ projeto.unidade_estimativa }}{% endif %}
+        {% if i.responsavel %} · {{ i.responsavel }}{% endif %}
+        {% if i.dias_em_andamento is not none %} · {{ 'desde hoje' if i.dias_em_andamento == 0 else 'há ' ~ i.dias_em_andamento ~ ' dia' ~ ('s' if i.dias_em_andamento != 1 else '') }}{% endif %}
+        {% if i.dias_aguardando_aceite is not none %} · aguarda aceite {{ 'desde hoje' if i.dias_aguardando_aceite == 0 else 'há ' ~ i.dias_aguardando_aceite ~ ' dia' ~ ('s' if i.dias_aguardando_aceite != 1 else '') }}{% endif %}
+        {% if not i.qualidade.verificavel %}<div><span class="selo selo-opositor">sem critérios de aceite</span></div>{% endif %}
+      </div>
+      {% if destinos[c.chave] %}
+      <form method="post" action="{{ url_for('entrega.item_mover', projeto_id=projeto.id, item_id=i.id) }}" class="mover">
+        {% for d, rotulo in destinos[c.chave] %}<button type="submit" name="destino" value="{{ d }}">{{ rotulo }}</button>{% endfor %}
+      </form>
+      {% endif %}
+    </div>
+    {% else %}<p class="mudo pequeno">Nenhum item.</p>
+    {% endfor %}
+  </section>
+  {% endfor %}
+</div>
+<p class="mudo pequeno">Concluir exige atender à definição de pronto e aceitar exige critérios de aceite e o nome de quem aceitou; quando faltar algo, o app abre o item para você completar.</p>
+{% endblock %}

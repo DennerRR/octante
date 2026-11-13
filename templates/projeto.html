@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}{{ projeto.nome }} — Octante{% endblock %}
+{% block conteudo %}
+<div class="cabecalho">
+  <div>
+    <h1>{{ projeto.nome }}</h1>
+    <p class="sub">{{ projeto.descricao or 'Sem descrição.' }}</p>
+  </div>
+  <a class="botao botao-sec" href="{{ url_for('projeto_editar', projeto_id=projeto.id) }}">Editar projeto</a>
+</div>
+
+{% set prox = namespace(e=none, fase=none) %}
+{% for f in fases %}{% for e in f.etapas %}{% if e.proximo and not prox.e %}{% set prox.e = e %}{% set prox.fase = f %}{% endif %}{% endfor %}{% endfor %}
+<section class="cartao guia-inicio">
+  <div class="titulo-secao"><h2>Por onde começar</h2><a href="{{ url_for('fluxo', projeto_id=projeto.id) }}">Ver o fluxo completo →</a></div>
+  <ol class="trilha-fases">
+    {% for f in fases %}
+    <li class="{{ 'completa' if f.completa }}{{ ' atual' if prox.fase and prox.fase.num == f.num }}">
+      <span class="trilha-num">{{ '✓' if f.completa else f.num }}</span><span>{{ f.nome }}</span><small>{{ f.feitas }}/{{ f.total }}</small>
+    </li>
+    {% endfor %}
+  </ol>
+  {% if prox.e %}
+  <div class="proximo-passo">
+    <div><span class="mudo pequeno">Próximo passo (fase {{ prox.fase.num }}: {{ prox.fase.nome }})</span>
+      <strong>{{ prox.e.titulo }}</strong><span class="pequeno">{{ prox.e.simples }}</span></div>
+    <a class="botao" href="{{ prox.e.link }}">Fazer agora →</a>
+  </div>
+  {% else %}
+  <p class="mudo">Todas as etapas obrigatórias foram feitas. Continue acompanhando pela fase 4 até encerrar.</p>
+  {% endif %}
+</section>
+
+{% if not iniciado %}
+<section class="cartao dica">
+  <strong>Projeto novo:</strong> termine a fase <em>Iniciar</em> (como trabalhar, termo de abertura e pessoas envolvidas) para ver aqui
+  a situação do projeto, os domínios e os princípios. Até lá, o painel mostra só o essencial.
+</section>
+{% endif %}
+
+<div class="resumo-linha">
+  <a class="metrica" href="{{ url_for('abordagem', projeto_id=projeto.id) }}">
+    <span class="metrica-rotulo">Abordagem</span>
+    <span class="metrica-valor">{{ dict(pmbok.ABORDAGENS).get(projeto.abordagem, 'Definir') }}</span>
+  </a>
+  <a class="metrica" href="{{ url_for('abertura', projeto_id=projeto.id) }}">
+    <span class="metrica-rotulo">Termo de abertura</span>
+    <span class="metrica-valor">{{ {'rascunho':'Rascunho','em_revisao':'Em revisão','aprovado':'Aprovado'}[abertura.status] }}</span>
+  </a>
+  <a class="metrica" href="{{ url_for('partes_registro', projeto_id=projeto.id) }}">
+    <span class="metrica-rotulo">Partes interessadas</span>
+    <span class="metrica-valor">{{ partes|length }}</span>
+  </a>
+  <a class="metrica" href="{{ url_for('entrega.painel', projeto_id=projeto.id) }}">
+    <span class="metrica-rotulo">Escopo aceito</span>
+    <span class="metrica-valor">{{ resumo_entrega.pct_aceito }}%<span class="mudo pequeno"> de {{ resumo_entrega.n_itens }} itens</span></span>
+  </a>
+  <a class="metrica" href="{{ url_for('trabalho.questoes', projeto_id=projeto.id) }}">
+    <span class="metrica-rotulo">Questões abertas</span>
+    <span class="metrica-valor">{{ resumo_trabalho.questoes_abertas }}{% if resumo_trabalho.questoes_atrasadas %} <span class="selo selo-opositor">{{ resumo_trabalho.questoes_atrasadas }} atrasada{{ 's' if resumo_trabalho.questoes_atrasadas > 1 }}</span>{% endif %}</span>
+  </a>
+  <a class="metrica" href="{{ url_for('incerteza.riscos', projeto_id=projeto.id) }}">
+    <span class="metrica-rotulo">Riscos ativos</span>
+    <span class="metrica-valor">{{ resumo_riscos.ativos }}{% if resumo_riscos.altos %} <span class="selo selo-opositor" title="ameaças acima do limite de risco">{{ resumo_riscos.altos }} alto{{ 's' if resumo_riscos.altos > 1 }}</span>{% endif %}</span>
+  </a>
+</div>
+
+{% if iniciado %}
+<section class="cartao">
+  <div class="titulo-secao"><h2>Situação do projeto</h2><a href="{{ url_for('medicao.painel', projeto_id=projeto.id) }}">Painel de desempenho →</a></div>
+  {{ m.semaforo(semaforo) }}
+</section>
+
+<section class="cartao">
+  <h2>Ciclo de engajamento das partes interessadas <span class="fonte">PMBOK 7, 2.1.1</span></h2>
+  {{ m.fluxo_partes(fluxo, none, projeto) }}
+</section>
+
+{% endif %}
+
+<div class="duas-colunas">
+  <section class="cartao">
+    <h2>Pontos de atenção</h2>
+    {% if alertas %}
+    <ul class="alertas">
+      {% for a in alertas[:8] %}
+      <li class="alerta alerta-{{ a.nivel }}"><a href="{{ a.link }}">{{ a.texto }}</a></li>
+      {% endfor %}
+    </ul>
+    {% if alertas|length > 8 %}
+    <details class="mais-alertas"><summary>Ver mais {{ alertas|length - 8 }} ponto{{ 's' if alertas|length - 8 > 1 }}</summary>
+      <ul class="alertas">{% for a in alertas[8:] %}<li class="alerta alerta-{{ a.nivel }}"><a href="{{ a.link }}">{{ a.texto }}</a></li>{% endfor %}</ul>
+    </details>
+    {% endif %}
+    {% else %}
+    <p class="mudo">Nenhum ponto de atenção no momento.</p>
+    {% endif %}
+  </section>
+
+  {% if iniciado %}
+  <section class="cartao">
+    <h2>Domínios de desempenho</h2>
+    <ul class="lista-dominios">
+      {% for d in dominios %}
+      <li>
+        <a href="{{ url_for('dominio', projeto_id=projeto.id, chave=d.chave) }}">{{ d.nome }}</a>
+        <div class="barra" title="{{ d.contagem.atendido }} atendidos, {{ d.contagem.parcial }} parciais de {{ d.total }}">
+          <span style="width: {{ d.pct }}%"></span>
+        </div>
+        <span class="mudo">{{ d.contagem.atendido }}/{{ d.total }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+</div>
+
+{% if iniciado %}
+<section class="cartao">
+  <div class="cabecalho">
+    <h2>Princípios <span class="fonte">Standard, seção 3</span></h2>
+    <a href="{{ url_for('principios.autoavaliacao', projeto_id=projeto.id) }}">Autoavaliação →</a>
+  </div>
+  <ul class="lista-principios">
+    {% for a in principios %}
+    <li><a href="{{ url_for('principios.autoavaliacao', projeto_id=projeto.id) }}#p{{ a.numero }}">{{ a.numero }}. {{ a.nome.split(' (')[0] }}</a>
+      <span class="selo selo-principio-{{ a.nivel }}">{{ a.pct }}%</span></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}

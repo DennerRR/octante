@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Princípios — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Autoavaliação dos 12 princípios</h1>
+<p class="sub">The Standard for Project Management (primeira parte do livro), seção 3. Os princípios orientam o comportamento; não são checklists.
+  Por isso o app mostra <strong>evidências</strong> calculadas a partir dos registros do projeto e deixa a <strong>reflexão da equipe</strong> com vocês.</p>
+
+{% set fortes = avaliacao|selectattr('nivel', 'equalto', 'forte')|list|length %}
+{% set fracos = avaliacao|selectattr('nivel', 'equalto', 'fraco')|list|length %}
+<div class="resumo-linha">
+  <div class="metrica"><span class="metrica-rotulo">Evidência forte</span><span class="metrica-valor">{{ fortes }}</span><span class="mudo pequeno">≥ 80% atendido</span></div>
+  <div class="metrica"><span class="metrica-rotulo">Parcial</span><span class="metrica-valor">{{ avaliacao|length - fortes - fracos }}</span><span class="mudo pequeno">50 a 79%</span></div>
+  <div class="metrica"><span class="metrica-rotulo">Pouca evidência</span><span class="metrica-valor">{{ fracos }}</span><span class="mudo pequeno">abaixo de 50%</span></div>
+</div>
+
+<section class="cartao">
+  <h2>Evidências por princípio</h2>
+  {{ m.grafico(grafico) }}
+</section>
+
+<form method="post">
+  {% for a in avaliacao %}
+  <section class="cartao principio principio-{{ a.nivel }}" id="p{{ a.numero }}">
+    <div class="principio-topo">
+      <div class="num-principio">{{ a.numero }}</div>
+      <div class="principio-titulo">
+        <h2>{{ a.nome }}</h2>
+        <p class="mudo">{{ a.texto }}</p>
+      </div>
+      <span class="selo selo-principio-{{ a.nivel }}">{{ dict(pmbok.NIVEIS_PRINCIPIO)[a.nivel] }} · {{ a.ok }}/{{ a.total }}</span>
+    </div>
+    <ul class="evidencias">
+      {% for c in a.checks %}
+      <li class="{{ 'feito' if c.ok else 'pendente' }}"><span class="marca" aria-hidden="true">{{ '✓' if c.ok else '○' }}</span>
+        <span class="sr">{{ 'Atendido:' if c.ok else 'Pendente:' }}</span>
+        {% if c.ok %}{{ c.rotulo }}{% else %}<a href="{{ c.link }}">{{ c.rotulo }}</a>{% endif %}</li>
+      {% endfor %}
+    </ul>
+    <details {{ 'open' if a.reflexao }}>
+      <summary>Reflexão da equipe{% if a.status != 'nao_avaliado' %} · {{ dict(pmbok.STATUS_VERIFICACAO)[a.status] }}{% endif %}</summary>
+      <div class="formulario">
+        <div class="segmentado" role="radiogroup" aria-label="Como a equipe avalia o princípio {{ a.numero }}">
+          {% for k, v in pmbok.STATUS_VERIFICACAO %}
+          <label class="seg seg-{{ k }}"><input type="radio" name="status_{{ a.i }}" value="{{ k }}" {{ 'checked' if a.status == k }}><span>{{ v }}</span></label>
+          {% endfor %}
+        </div>
+        <label>Como estamos aplicando este princípio? O que mudar?
+          <textarea name="reflexao_{{ a.i }}" rows="2">{{ a.reflexao }}</textarea>
+        </label>
+        {% if a.atualizado_em %}<span class="mudo pequeno">Atualizado em {{ a.atualizado_em|data_br }}</span>{% endif %}
+      </div>
+    </details>
+  </section>
+  {% endfor %}
+  <div class="acoes barra-fixa"><button class="botao" type="submit">Salvar reflexões</button></div>
+</form>
+{% endblock %}

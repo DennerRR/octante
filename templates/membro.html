@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block titulo %}{{ m.nome }} — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<p><a href="{{ url_for('equipe.membros', projeto_id=projeto.id) }}">← Equipe</a></p>
+<h1>{{ m.nome }} {% if not m.ativo %}<span class="selo">liberado em {{ m.liberado_em|data_br }}</span>{% endif %}</h1>
+<p class="sub">{{ m.papel or 'Papel não informado' }} · na equipe desde {{ m.criado_em|data_br }}</p>
+<form method="post" class="cartao formulario">
+  {% include '_form_membro.html' %}
+  <div class="acoes"><button class="botao" type="submit">Salvar</button></div>
+</form>
+<section class="cartao">
+  <h2>Papéis na matriz RACI</h2>
+  {% if papeis %}<ul class="lista-simples">{% for p in papeis %}<li><strong>{{ p.papel }}</strong> · {{ p.descricao }}</li>{% endfor %}</ul>
+  {% else %}<p class="mudo">Nenhum papel atribuído.</p>{% endif %}
+</section>
+<div class="duas-colunas">
+  <form method="post" class="cartao">
+    {% if m.ativo %}<input type="hidden" name="acao" value="liberar"><p>Ao fim do trabalho, libere o membro do projeto. O histórico é mantido.</p>
+    <button class="botao botao-sec" type="submit">Liberar do projeto</button>
+    {% else %}<input type="hidden" name="acao" value="reativar"><button class="botao botao-sec" type="submit">Trazer de volta à equipe</button>{% endif %}
+  </form>
+  <form method="post" class="cartao perigo"><input type="hidden" name="acao" value="excluir">
+    <p>Excluir remove também os papéis na matriz RACI.</p><button class="botao botao-perigo" type="submit">Excluir membro</button></form>
+</div>
+{% endblock %}

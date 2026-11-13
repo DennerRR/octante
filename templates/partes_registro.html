@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m14 with context %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Partes interessadas — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<div class="cabecalho">
+  <div>
+    <h1>Partes interessadas</h1>
+<p class="exportar-linha">{{ m14.exportar(projeto, 'partes') }}</p>
+    <p class="sub">Etapa 1 — <strong>Identificar</strong>. {{ pmbok.ETAPAS_ENGAJAMENTO[0][2] }}</p>
+  </div>
+  <a class="botao" href="{{ url_for('parte_nova', projeto_id=projeto.id) }}">+ Identificar parte interessada</a>
+</div>
+{{ m.fluxo_partes(fluxo, etapa, projeto) }}
+
+{% if partes %}
+<section class="cartao">
+  <h2>Registro das partes interessadas <span class="fonte">artefato, seção 4.6.2</span></h2>
+  <div class="tabela-rolagem">
+  <table class="tabela">
+    <thead><tr><th>Nome</th><th>Papel / organização</th><th>Categoria</th><th>Interna?</th><th>Atitude</th><th>Prioridade</th><th>Engajamento</th></tr></thead>
+    <tbody>
+      {% for s in partes %}
+      <tr class="{{ 'inativa' if not s.ativa }}">
+        <td><a href="{{ url_for('parte_detalhe', projeto_id=projeto.id, parte_id=s.id) }}">{{ s.nome }}</a>{% if not s.ativa %} <span class="mudo">(inativa)</span>{% endif %}</td>
+        <td>{{ s.papel }}{% if s.organizacao %} <span class="mudo">· {{ s.organizacao }}</span>{% endif %}</td>
+        <td>{{ s.categoria or '—' }}</td>
+        <td>{{ 'Interna' if s.interna else 'Externa' }}</td>
+        <td>{{ m.selo_atitude(s.atitude) }}</td>
+        <td>{{ m.selo_quadrante(s.quadrante) }}</td>
+        <td>{{ s.engajamento_atual|nivel }} → {{ s.engajamento_desejado|nivel }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% else %}
+<div class="vazio">
+  <h2>Nenhuma parte interessada identificada</h2>
+  <p>Comece pelas mais fáceis de identificar: cliente, patrocinador, equipe do projeto e usuários finais.
+     Depois procure as menos óbvias, como órgãos reguladores, fornecedores e áreas impactadas indiretamente.</p>
+  <a class="botao" href="{{ url_for('parte_nova', projeto_id=projeto.id) }}">Identificar a primeira</a>
+</div>
+{% endif %}
+
+<section class="cartao dica">
+  <h3>Exemplos de partes interessadas (Figura 2-2)</h3>
+  <p>{{ pmbok.CATEGORIAS_PARTES[:-1]|join(' · ') }}</p>
+</section>
+{% endblock %}

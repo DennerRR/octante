@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Monitoramento — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Monitorar</h1>
+<p class="sub">Etapa 5. {{ pmbok.ETAPAS_ENGAJAMENTO[4][2] }}</p>
+{{ m.fluxo_partes(fluxo, etapa, projeto) }}
+
+{% if projeto.abordagem %}
+<div class="cartao dica"><strong>Tailoring ({{ dict(pmbok.ABORDAGENS)[projeto.abordagem] }}):</strong> {{ pmbok.TAILORING[projeto.abordagem].monitoramento }}</div>
+{% endif %}
+
+{% if partes %}
+<div class="duas-colunas">
+  <section class="cartao">
+    <h2>Registrar interação</h2>
+    <form method="post" class="formulario">
+      <label>Parte interessada
+        <select name="parte_id" required>
+          {% for s in partes %}<option value="{{ s.id }}">{{ s.nome }}</option>{% endfor %}
+        </select>
+      </label>
+      {% include '_form_interacao.html' %}
+    </form>
+  </section>
+
+  <section class="cartao">
+    <h2>Pontos de atenção</h2>
+    {% if alertas %}
+    <ul class="alertas">{% for a in alertas %}<li class="alerta alerta-{{ a.nivel }}"><a href="{{ a.link }}">{{ a.texto }}</a></li>{% endfor %}</ul>
+    {% else %}<p class="mudo">Nada a destacar. A estratégia de engajamento parece estar funcionando.</p>{% endif %}
+  </section>
+</div>
+
+<section class="cartao">
+  <h2>Situação por parte interessada</h2>
+  <div class="tabela-rolagem">
+  <table class="tabela">
+    <thead><tr><th>Parte interessada</th><th>Quadrante</th><th>Engajamento</th><th>Última interação</th><th>Satisfação</th><th>Tendência</th></tr></thead>
+    <tbody>
+    {% for s in partes %}
+      <tr>
+        <td><a href="{{ url_for('parte_detalhe', projeto_id=projeto.id, parte_id=s.id) }}">{{ s.nome }}</a></td>
+        <td>{{ m.selo_quadrante(s.quadrante) }}</td>
+        <td>{{ s.engajamento_atual|nivel }} → {{ s.engajamento_desejado|nivel }}</td>
+        <td>{% if s.ultima_interacao %}{{ s.ultima_interacao|data_br }}{% if not s.monitorada %} <span class="selo selo-opositor">há mais de {{ dias }} dias</span>{% endif %}{% else %}<span class="mudo">nenhuma</span>{% endif %}</td>
+        <td>{{ s.ultima_satisfacao ~ '/5' if s.ultima_satisfacao else '—' }}</td>
+        <td class="tendencia">{{ m.sparkline(s.satisfacoes) }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<div class="duas-colunas">
+  <section class="cartao">
+    <h2>Interações recentes</h2>
+    {% if interacoes %}
+    <ul class="historico">
+      {% for i in interacoes %}
+      <li><strong>{{ i.data|data_br }}</strong> · {{ i.nome }} · {{ pmbok.METODOS_COMUNICACAO_CURTO.get(i.metodo, '') }}{% if i.satisfacao %} · satisfação {{ i.satisfacao }}/5{% endif %}
+        {% if i.resumo %}<div>{{ i.resumo }}</div>{% endif %}
+        {% if i.feedback %}<div class="mudo">Feedback: {{ i.feedback }}</div>{% endif %}</li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="mudo">Nenhuma interação registrada.</p>{% endif %}
+  </section>
+  <section class="cartao">
+    <h2>Mudanças de engajamento</h2>
+    {% if historico %}
+    <ul class="historico">
+      {% for h in historico %}
+      <li><strong>{{ h.data|data_br }}</strong> · {{ h.nome }}: {{ h.nivel_anterior|nivel }} → <strong>{{ h.nivel_novo|nivel }}</strong>
+        {% if h.nivel_novo > h.nivel_anterior %}<span class="selo selo-apoiador">avançou</span>{% else %}<span class="selo selo-opositor">recuou</span>{% endif %}</li>
+      {% endfor %}
+    </ul>
+    <p class="mudo pequeno">O movimento ao longo do contínuo de engajamento indica o nível relativo de satisfação (Tabela 2-2).</p>
+    {% else %}<p class="mudo">Nenhuma mudança de nível registrada ainda.</p>{% endif %}
+  </section>
+</div>
+{% else %}
+<div class="vazio"><p>Identifique partes interessadas antes de monitorá-las.</p>
+  <a class="botao" href="{{ url_for('parte_nova', projeto_id=projeto.id) }}">Identificar parte interessada</a></div>
+{% endif %}
+{% endblock %}

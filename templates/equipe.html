@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Equipe — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Equipe</h1>
+<p class="sub">Domínio de desempenho 2.2: as pessoas que produzem as entregas. Liderança é praticada por todos os membros,
+  com a gestão centralizada no gerente ou distribuída pela equipe.</p>
+
+<div class="resumo-linha">
+  <div class="metrica"><span class="metrica-rotulo">Membros ativos</span><span class="metrica-valor">{{ resumo.membros }}</span><span class="mudo pequeno">{{ resumo.remotos }} remotos</span></div>
+  <a class="metrica" href="{{ url_for('equipe.acordo', projeto_id=projeto.id) }}"><span class="metrica-rotulo">Acordo de trabalho</span><span class="metrica-valor">{{ resumo.acordo }}<span class="mudo pequeno"> de 5 seções</span></span></a>
+  <a class="metrica" href="{{ url_for('equipe.matriz', projeto_id=projeto.id) }}"><span class="metrica-rotulo">Matriz RACI</span><span class="metrica-valor">{{ resumo.raci_linhas }}<span class="mudo pequeno"> linhas{% if resumo.raci_problemas %}, {{ resumo.raci_problemas|length }} com problema{% endif %}</span></span></a>
+  <a class="metrica" href="{{ url_for('equipe.saude', projeto_id=projeto.id) }}"><span class="metrica-rotulo">Saúde da equipe</span><span class="metrica-valor">{{ (('%.1f'|format(resumo.ultima.media)).replace('.', ',') ~ '/5') if resumo.ultima and resumo.ultima.media else '—' }}</span><span class="mudo pequeno">{{ 'última avaliação ' ~ (resumo.ultima.data|data_br) if resumo.ultima else 'sem avaliação' }}</span></a>
+</div>
+
+{% if alertas %}<section class="cartao"><h2>Pontos de atenção</h2><ul class="alertas">{% for a in alertas %}<li class="alerta alerta-{{ a.nivel }}"><a href="{{ a.link }}">{{ a.texto }}</a></li>{% endfor %}</ul></section>{% endif %}
+
+<form method="post" class="cartao formulario">
+  <input type="hidden" name="acao" value="lideranca">
+  <h2>Liderança e estágio da equipe</h2>
+  <fieldset><legend>Gestão do projeto</legend>
+    {% for k, v in pmbok.MODELOS_LIDERANCA %}<label class="check"><input type="radio" name="modelo_lideranca" value="{{ k }}" {{ 'checked' if projeto.modelo_lideranca == k }}> {{ v }}</label>{% endfor %}
+  </fieldset>
+  <p><strong>Estágio da equipe</strong> <span class="fonte">escada de Tuckman, 4.2.6.1</span></p>
+  <div class="estagios">
+    {% for k, nome, desc in pmbok.ESTAGIOS_EQUIPE %}
+    <label class="estagio"><input type="radio" name="estagio_equipe" value="{{ k }}" {{ 'checked' if projeto.estagio_equipe == k }}><span><strong>{{ nome }}</strong>{{ desc }}</span></label>
+    {% endfor %}
+  </div>
+  <p class="mudo pequeno">A progressão não é linear: equipes podem voltar a estágios anteriores, e nem todas chegam ao desempenho.</p>
+  <div class="acoes"><button class="botao botao-sec" type="submit">Salvar</button></div>
+</form>
+
+<section class="cartao">
+  <h2>Membros</h2>
+  {% if membros %}
+  <div class="tabela-rolagem"><table class="tabela">
+    <thead><tr><th>Nome</th><th>Papel</th><th>Dedicação</th><th>Local</th><th>Habilidades</th><th>Lacunas</th><th>Motivador</th></tr></thead>
+    <tbody>
+    {% for x in membros %}
+    <tr class="{{ 'inativa' if not x.ativo }}">
+      <td><a href="{{ url_for('equipe.membro', projeto_id=projeto.id, membro_id=x.id) }}">{{ x.nome }}</a>{% if not x.ativo %} <span class="mudo pequeno">(liberado em {{ x.liberado_em|data_br }})</span>{% endif %}</td>
+      <td>{{ x.papel or '—' }}</td><td>{{ dict(pmbok.DEDICACOES)[x.dedicacao] }}</td><td>{{ dict(pmbok.LOCAIS)[x.local] }}</td>
+      <td>{{ x.habilidades|truncate(60) or '—' }}</td>
+      <td>{% if x.lacunas %}{{ x.lacunas|truncate(40) }}{% if not x.plano_desenvolvimento %} <span class="selo selo-opositor">sem plano</span>{% endif %}{% else %}—{% endif %}</td>
+      <td>{{ x.motivador or '—' }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<p class="mudo">Nenhum membro cadastrado.</p>{% endif %}
+</section>
+
+<form method="post" class="cartao formulario destaque">
+  <h2>Adicionar membro</h2>
+  {% include '_form_membro.html' %}
+  <div class="acoes"><button class="botao" type="submit">Adicionar à equipe</button></div>
+</form>
+{% endblock %}

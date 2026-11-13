@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block titulo %}Minhas pendências — Octante{% endblock %}
+{% block conteudo %}
+<h1>Minhas pendências</h1>
+<p class="sub">Questões, riscos e itens em que você é o responsável, em todos os projetos. Atrasados primeiro.
+  Para aparecer aqui, o campo “Responsável” precisa ter o seu nome ({{ nomes|join(', ') }}).</p>
+<section class="cartao">
+{% if itens %}
+<table><thead><tr><th>O quê</th><th>Projeto</th><th>Status</th><th>Prazo</th></tr></thead><tbody>
+{% for i in itens %}
+  <tr><td><span class="selo">{{ i.tipo }}</span> <a href="{{ i.link }}">{{ i.rotulo }} {{ i.titulo }}</a></td><td>{{ i.projeto }}</td>
+    <td class="pequeno">{{ i.status|replace('_', ' ') }}</td>
+    <td>{% if i.prazo %}<span class="{{ 'selo selo-q0' if i.atrasado }}">{{ i.prazo|data_br }}{% if i.atrasado %} · atrasado{% endif %}</span>{% else %}<span class="mudo">—</span>{% endif %}</td></tr>
+{% endfor %}</tbody></table>
+{% else %}<p class="mudo">Nada sob sua responsabilidade agora. 🎉</p>{% endif %}
+</section>
+{% if revisoes %}
+<section class="cartao">
+  <h2>Respostas do PMO (últimos 30 dias)</h2>
+  {% for r in revisoes %}
+  <div class="flash flash-{{ 'ok' if r.status == 'aprovada' else 'erro' }}"><div>
+    <strong>{{ r.titulo }}</strong> ({{ r.projeto }}): {{ 'aprovado' if r.status == 'aprovada' else 'devolvido' }} por {{ r.revisor }}.
+    {% if r.comentario %}“{{ r.comentario }}”{% endif %} {% if r.link %}<a href="{{ r.link }}">Abrir</a>{% endif %}</div></div>
+  {% endfor %}
+</section>
+{% endif %}
+{% endblock %}

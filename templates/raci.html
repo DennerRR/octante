@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block titulo %}Matriz RACI — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Matriz RACI</h1>
+<p class="sub">Matriz de atribuição de responsabilidades (seção 4.6.6): quem é <strong>R</strong>esponsável por executar, quem
+  <strong>A</strong>prova e presta contas, quem é <strong>C</strong>onsultado e quem é <strong>I</strong>nformado em cada atividade, decisão ou entrega.
+  Cada linha deve ter exatamente um A e pelo menos um R.</p>
+{% if not membros %}
+<div class="vazio"><p>Cadastre os membros da equipe antes de montar a matriz.</p><a class="botao" href="{{ url_for('equipe.membros', projeto_id=projeto.id) }}">Ir para a equipe</a></div>
+{% else %}
+{% if linhas %}
+<form method="post" class="cartao">
+  <input type="hidden" name="acao" value="salvar">
+  <div class="tabela-rolagem"><table class="tabela raci">
+    <thead><tr><th>Atividade, decisão ou entrega</th>{% for x in membros %}<th class="membro">{{ x.nome.split()[0] }}<div class="mudo pequeno">{{ x.papel|truncate(18) }}</div></th>{% endfor %}<th></th></tr></thead>
+    <tbody>
+    {% for l in linhas %}
+    <tr>
+      <td>{% if l.item_id %}<a href="{{ url_for('entrega.item', projeto_id=projeto.id, item_id=l.item_id) }}">{{ l.descricao }}</a>{% else %}{{ l.descricao }}{% endif %}
+        {% if l.problemas %}<div><span class="selo selo-opositor">{{ l.problemas|join(', ') }}</span></div>{% endif %}</td>
+      {% for x in membros %}{% set v = l.papeis.get(x.id, '') %}
+      <td class="centro {{ 'papel-A' if v == 'A' }}"><select name="p_{{ l.id }}_{{ x.id }}" aria-label="Papel de {{ x.nome }} em {{ l.descricao }}">
+        <option value=""></option>{% for k, nome in pmbok.PAPEIS_RACI %}<option value="{{ k }}" {{ 'selected' if v == k }} title="{{ nome }}">{{ k }}</option>{% endfor %}</select></td>
+      {% endfor %}
+      <td><button class="link-perigo" type="submit" name="excluir_linha" value="{{ l.id }}" title="Remover linha">✕</button></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <div class="acoes"><button class="botao" type="submit">Salvar matriz</button></div>
+</form>
+{% endif %}
+<form method="post" class="cartao formulario destaque">
+  <input type="hidden" name="acao" value="linha">
+  <h2>Adicionar linha</h2>
+  <div class="grade-2">
+    <label>Atividade, decisão ou entrega<input name="descricao" placeholder="Ex.: Aprovar mudanças de escopo"></label>
+    <label>Ou um item do escopo
+      <select name="item_id"><option value="">—</option>{% for i in itens %}<option value="{{ i.id }}">I-{{ i.codigo }} · {{ i.titulo }}</option>{% endfor %}</select></label>
+  </div>
+  <div class="acoes"><button class="botao botao-sec" type="submit">Adicionar</button></div>
+</form>
+{% endif %}
+{% endblock %}

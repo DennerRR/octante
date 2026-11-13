@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block titulo %}Encerramento — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Encerramento do projeto</h1>
+<p class="sub">Fase de encerramento (seção 2.3.5): o projeto é encerrado, o conhecimento e os artefatos são arquivados, a equipe é liberada e os contratos
+  são fechados. Antes disso, o termo de abertura e o business case são revistos para saber se os benefícios pretendidos foram alcançados.</p>
+
+<form method="post" class="formulario">
+<div class="duas-colunas">
+  <section class="cartao">
+    <h2>Checklist</h2>
+    <ul class="check-lista">
+      {% for c in check.auto %}
+      <li><span class="{{ 'marca-ok' if c.ok else 'marca-pendente' }}" aria-hidden="true">{{ '✓' if c.ok else '✕' }}</span>
+        <span>{{ c.rotulo }}{% if not c.ok %}<div class="mudo pequeno"><a href="{{ c.link }}">{{ c.pendencia }}</a></div>{% endif %}</span></li>
+      {% endfor %}
+      {% for c in check.manual %}
+      <li><label class="check"><input type="checkbox" name="manual_{{ c.chave }}" value="1" {{ 'checked' if c.ok }}> {{ c.rotulo }}</label></li>
+      {% endfor %}
+    </ul>
+  </section>
+  <section class="cartao">
+    <h2>Desempenho em relação ao planejado</h2>
+    {% set cp = check.comparacao %}
+    <table class="tabela tabela-compacta">
+      <tr><td>Escopo aceito</td><td class="direita">{{ cp.escopo_aceito }} de {{ cp.escopo_total }} itens</td></tr>
+      {% if cp.orcamento %}<tr><td>Orçamento planejado (sem reservas)</td><td class="direita">{{ cp.orcamento|moeda }}</td></tr>
+      <tr><td>Custo real</td><td class="direita">{{ cp.custo_real|moeda }}</td></tr>{% endif %}
+      <tr><td>Término planejado</td><td class="direita">{{ cp.fim_planejado|data_br or '—' }}</td></tr>
+      <tr><td>Término real</td><td class="direita">{{ projeto.encerrado_em|data_br if projeto.encerrado_em else 'em aberto' }}</td></tr>
+    </table>
+    {% if objetivos and (objetivos.objetivos or objetivos.criterios_sucesso) %}
+    <h3 class="espaco">Do termo de abertura</h3>
+    {% if objetivos.objetivos %}<p><strong>Objetivos:</strong></p><ul class="lista-simples">{% for l in objetivos.objetivos.splitlines() if l.strip() %}<li>{{ l }}</li>{% endfor %}</ul>{% endif %}
+    {% if objetivos.criterios_sucesso %}<p><strong>Critérios de sucesso:</strong> {{ objetivos.criterios_sucesso }}</p>{% endif %}
+    {% endif %}
+  </section>
+</div>
+
+<section class="cartao">
+  <h2>Avaliação final</h2>
+  <label>Os objetivos e benefícios foram alcançados? * <span class="ajuda">Compare com os objetivos e critérios de sucesso do termo de abertura</span>
+    <textarea name="avaliacao_objetivos" rows="3">{{ dados.avaliacao_objetivos or '' }}</textarea></label>
+  <label>Resultado geral <span class="ajuda">Inclusive resultados abaixo do esperado: eles fazem parte da incerteza de criar algo único (2.6.4)</span>
+    <textarea name="resultado" rows="2">{{ dados.resultado or '' }}</textarea></label>
+  <label>Justificativa <span class="ajuda">Obrigatória para cancelar, ou para encerrar com pendências no checklist</span>
+    <textarea name="justificativa" rows="2">{{ dados.justificativa or '' }}</textarea></label>
+  <label>Recomendações para projetos futuros<textarea name="recomendacoes" rows="2">{{ dados.recomendacoes or '' }}</textarea></label>
+  {% if licoes_org %}
+  <p class="mudo pequeno">Lições marcadas para outras equipes ou para a organização ({{ licoes_org|length }}):
+    {% for l in licoes_org[:3] %}“{{ l.descricao|truncate(70) }}”{{ '; ' if not loop.last }}{% endfor %}. Compartilhe-as no repositório de conhecimento da organização.</p>
+  {% endif %}
+</section>
+
+<div class="acoes barra-salvar">
+  {% if projeto.situacao == 'ativo' %}
+  <button class="botao botao-sec" type="submit" name="acao" value="salvar">Salvar</button>
+  <button class="botao" type="submit" name="acao" value="encerrar">Encerrar projeto</button>
+  <button class="botao botao-perigo" type="submit" name="acao" value="cancelar">Cancelar projeto</button>
+  {% else %}
+  <button class="botao botao-sec" type="submit" name="acao" value="salvar">Salvar avaliação</button>
+  <button class="botao botao-sec" type="submit" name="acao" value="reabrir">Reabrir projeto</button>
+  {% endif %}
+</div>
+</form>
+
+{% if projeto.situacao != 'ativo' and (not login_ativo or (usuario_atual and usuario_atual.admin)) %}
+<section class="cartao">
+  <h2>Privacidade (LGPD)</h2>
+  <p class="pequeno">Projeto encerrado não precisa mais dos dados pessoais das partes interessadas. Anonimizar apaga
+     contatos, crenças e expectativas registrados sobre as pessoas e mantém o resto do histórico.</p>
+  <form method="post" action="{{ url_for('dados.anonimizar', projeto_id=projeto.id) }}">
+    <button class="botao botao-sec" type="submit" data-confirmar="Os contatos, crenças e expectativas das partes interessadas deste projeto serão apagados.">Anonimizar dados pessoais</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

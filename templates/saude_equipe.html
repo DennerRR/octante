@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Saúde da equipe — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Saúde da equipe</h1>
+<p class="sub">Avaliação periódica dos fatores de equipes de alto desempenho (seção 2.2.3), por exemplo ao fim de cada retrospectiva.
+  Dê notas de 1 (muito fraco) a 5 (muito forte), de preferência pela média das respostas anônimas da equipe.</p>
+{% if grafico %}
+<section class="cartao"><h2>Últimas avaliações</h2>{{ m.grafico(grafico) }}</section>
+{% endif %}
+<form method="post" class="cartao formulario">
+  <h2>Nova avaliação</h2>
+  <div class="tabela-rolagem"><table class="tabela">
+    <thead><tr><th>Fator</th>{% for n in range(1, 6) %}<th class="centro">{{ n }}</th>{% endfor %}</tr></thead>
+    <tbody>
+    {% for k, nome, desc in pmbok.FATORES_ALTO_DESEMPENHO %}
+    <tr><td><strong>{{ nome }}</strong><div class="mudo pequeno">{{ desc }}</div></td>
+      {% for n in range(1, 6) %}<td class="centro"><input type="radio" name="{{ k }}" value="{{ n }}" aria-label="{{ nome }}: {{ n }}"></td>{% endfor %}</tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <div class="grade-3">
+    <label>Data<input type="date" name="data" value="{{ hoje }}" max="{{ hoje }}"></label>
+    <label>Participantes<input type="number" min="1" name="participantes"></label>
+    <label>Observações<input name="observacoes" placeholder="Ex.: retrospectiva da sprint 3"></label>
+  </div>
+  <div class="acoes"><button class="botao" type="submit">Registrar avaliação</button></div>
+</form>
+{% if avaliacoes %}
+<section class="cartao">
+  <h2>Histórico</h2>
+  <div class="tabela-rolagem"><table class="tabela">
+    <thead><tr><th>Data</th>{% for k, nome, _ in pmbok.FATORES_ALTO_DESEMPENHO %}<th class="centro" title="{{ nome }}">{{ nome.split()[0] }}</th>{% endfor %}<th>Média</th><th></th></tr></thead>
+    <tbody>
+    {% for a in avaliacoes %}
+    <tr><td>{{ a.data|data_br }}{% if a.observacoes %}<div class="mudo pequeno">{{ a.observacoes }}</div>{% endif %}</td>
+      {% for k, _n, _d in pmbok.FATORES_ALTO_DESEMPENHO %}{% set v = a.notas.get(k) %}<td class="centro {{ 'nota-baixa' if v and v <= 2 }}">{{ v or '—' }}</td>{% endfor %}
+      <td><strong>{{ ('%.1f'|format(a.media)).replace('.', ',') if a.media else '—' }}</strong></td>
+      <td><form method="post"><input type="hidden" name="acao" value="excluir"><input type="hidden" name="avaliacao_id" value="{{ a.id }}"><button class="link-perigo" type="submit" title="Remover">✕</button></form></td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endif %}
+{% endblock %}

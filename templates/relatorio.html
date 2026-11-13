@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m14 with context %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Relatório de {{ r.data|data_br }} — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<p class="nao-imprimir"><a href="{{ url_for('medicao.relatorios', projeto_id=projeto.id) }}">← Relatórios de status</a></p>
+<div class="cabecalho">
+  <div>
+    <h1>Relatório de status · {{ projeto.nome }}</h1>
+    <p class="sub">Situação em {{ r.data|data_br }}{% if projeto.abordagem %} · abordagem {{ dict(pmbok.ABORDAGENS)[projeto.abordagem]|lower }}{% endif %}</p>
+  </div>
+  <button class="botao botao-sec nao-imprimir" type="button" data-imprimir>Imprimir ou salvar PDF</button>
+</div>
+{% if r.resumo %}<section class="cartao destaque"><p class="resumo-relatorio">{{ r.resumo }}</p></section>{% endif %}
+<section class="cartao"><h2>Situação por dimensão</h2>{{ m.semaforo(dados.semaforo) }}</section>
+<div class="duas-colunas">
+  <section class="cartao"><h2>Realizações</h2>{% if r.realizacoes %}<ul class="lista-simples">{% for l in r.realizacoes.splitlines() if l.strip() %}<li>{{ l }}</li>{% endfor %}</ul>{% else %}<p class="mudo">—</p>{% endif %}</section>
+  <section class="cartao"><h2>Próximos passos</h2>{% if r.proximos_passos %}<ul class="lista-simples">{% for l in r.proximos_passos.splitlines() if l.strip() %}<li>{{ l }}</li>{% endfor %}</ul>{% else %}<p class="mudo">—</p>{% endif %}</section>
+</div>
+<section class="cartao">
+  <h2>Números</h2>
+  <table class="tabela tabela-compacta">
+    <tr><td>Escopo aceito / concluído</td><td class="direita">{{ dados.escopo.pct_aceito }}% / {{ dados.escopo.pct_feito }}% ({{ dados.escopo.aguardando_aceite }} aguardando aceite)</td></tr>
+    {% if dados.previsao.data %}<tr><td>Previsão de término</td><td class="direita">{{ dados.previsao.data|data_br }} <span class="mudo pequeno">({{ dados.previsao.metodo }})</span></td></tr>{% endif %}
+    {% if dados.valor_agregado %}{% set va = dados.valor_agregado %}
+    <tr><td>Valor planejado / agregado / custo real</td><td class="direita">{{ va.vp|moeda }} / {{ va.va|moeda }} / {{ va.cr|moeda }}</td></tr>
+    <tr><td>IDP / IDC</td><td class="direita">{{ ('%.2f'|format(va.idp)).replace('.', ',') if va.idp is number else '—' }} / {{ ('%.2f'|format(va.idc)).replace('.', ',') if va.idc is number else '—' }}</td></tr>
+    <tr><td>Estimativa no término (orçamento {{ va.onp|moeda }})</td><td class="direita">{{ va.ent|moeda }}</td></tr>
+    {% endif %}
+  </table>
+</section>
+<div class="duas-colunas">
+  <section class="cartao"><h2>Principais riscos</h2>
+    {% if dados.riscos %}<ul class="lista-simples">{% for x in dados.riscos %}<li><strong>{{ x.rotulo }}</strong> {{ x.titulo }} · {{ 'ameaça' if x.tipo == 'ameaca' else 'oportunidade' }}{% if x.pontuacao %} · pontuação {{ x.pontuacao }}{% endif %}{% if x.estrategia %} · {{ x.estrategia|lower }}{% endif %}</li>{% endfor %}</ul>{% else %}<p class="mudo">Nenhum risco ativo.</p>{% endif %}</section>
+  <section class="cartao"><h2>Questões abertas</h2>
+    {% if dados.questoes %}<ul class="lista-simples">{% for q in dados.questoes %}<li><strong>{{ q.rotulo }}</strong> {{ q.titulo }}{% if q.prazo %} · prazo {{ q.prazo|data_br }}{% endif %}{% if q.atrasada %} <span class="selo selo-opositor">atrasada</span>{% endif %}</li>{% endfor %}</ul>{% else %}<p class="mudo">Nenhuma questão aberta.</p>{% endif %}</section>
+</div>
+{% if dados.alertas %}<section class="cartao"><h2>Pontos de atenção graves</h2><ul class="lista-simples">{% for a in dados.alertas %}<li>{{ a }}</li>{% endfor %}</ul></section>{% endif %}
+<form method="post" class="cartao perigo nao-imprimir"><input type="hidden" name="acao" value="excluir"><button class="botao botao-perigo" type="submit">Excluir relatório</button></form>
+<div class="nao-imprimir">{{ m14.pedir_revisao(projeto, 'relatorio_status', r.id, 'Relatório de status de ' ~ (r.data|data_br)) }}</div>
+{% endblock %}

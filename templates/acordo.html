@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block titulo %}Acordo de trabalho — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Acordo de trabalho da equipe</h1>
+<p class="sub">Artefato <em>project team charter</em> (seção 4.6.9): registra os valores, os acordos e as regras de funcionamento da equipe
+  e deixa claro o comportamento esperado. Escreva junto com a equipe.{% if projeto.acordo_atualizado_em %} Última atualização em {{ projeto.acordo_atualizado_em|data_br }}.{% endif %}</p>
+<form method="post" class="formulario">
+  <section class="cartao">
+    <label>Valores e comportamentos <span class="ajuda">Ex.: transparência, integridade, respeito, diálogo em vez de debate, coragem para discordar (2.2.2)</span>
+      <textarea name="acordo_valores" rows="3">{{ projeto.acordo_valores or '' }}</textarea></label>
+    <label>Comunicação <span class="ajuda">Canais, tempo de resposta esperado, o que é síncrono e o que é assíncrono</span>
+      <textarea name="acordo_comunicacao" rows="3">{{ projeto.acordo_comunicacao or '' }}</textarea></label>
+    <label>Tomada de decisão <span class="ajuda">O que a equipe decide sozinha, o que vai para votação (ex.: punho de cinco) e o que é escalado (2.2.4.4)</span>
+      <textarea name="acordo_decisoes" rows="3">{{ projeto.acordo_decisoes or '' }}</textarea></label>
+    <label>Conflitos <span class="ajuda">Foco no problema, não nas pessoas; no presente e no futuro; buscar alternativas juntos</span>
+      <textarea name="acordo_conflitos" rows="3">{{ projeto.acordo_conflitos or '' }}</textarea></label>
+    <label>Reuniões e horários <span class="ajuda">Cerimônias, horários de trabalho em comum, como lidar com fusos e trabalho remoto</span>
+      <textarea name="acordo_reunioes" rows="3">{{ projeto.acordo_reunioes or '' }}</textarea></label>
+  </section>
+  <div class="acoes barra-salvar"><button class="botao" type="submit">Salvar acordo</button></div>
+</form>
+{% endblock %}

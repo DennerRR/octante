@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block titulo %}Gantt — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Cronograma (Gantt)</h1>
+<p class="sub">Barras com as datas planejadas de cada item; as dependências aparecem ao lado do nome. Defina datas em
+  <a href="{{ url_for('medicao.cronograma', projeto_id=projeto.id) }}">Prazo e orçamento</a> e dependências no próprio item.</p>
+{% if conflitos %}<div class="flash flash-erro" role="alert"><div><strong>Dependências em conflito:</strong><ul>{% for c in conflitos %}<li>{{ c }}</li>{% endfor %}</ul></div></div>{% endif %}
+<section class="cartao">
+{% if barras %}
+  <p class="pequeno mudo">{{ ini|string|data_br }} a {{ fim|string|data_br }} · azul: planejado · verde: concluído · vermelho: atrasado · linha âmbar: hoje</p>
+  <div class="gantt">
+  {% for b in barras %}
+    <div class="gantt-linha">
+      <div><a href="{{ url_for('entrega.item', projeto_id=projeto.id, item_id=b.i.id) }}">{{ b.i.rotulo }} {{ b.i.titulo }}</a>
+        {% if b.deps %}<div class="pequeno mudo">depende de {{ b.deps|join(', ') }}</div>{% endif %}</div>
+      <div class="gantt-trilho">
+        <span class="gantt-barra {{ 'feito' if b.i.feito else ('atrasado' if b.atrasado) }}" style="left: {{ b.esq }}%; width: {{ b.larg }}%"
+              title="{{ b.i.inicio_planejado|data_br }} a {{ b.i.fim_planejado|data_br }}"></span>
+        {% if marca_hoje is not none %}<span class="gantt-hoje" style="left: {{ marca_hoje }}%"></span>{% endif %}
+      </div>
+    </div>
+  {% endfor %}
+  </div>
+{% else %}<p class="mudo">Nenhum item com datas de início e fim planejadas.</p>{% endif %}
+{% if sem_data %}<p class="pequeno mudo">Sem datas: {% for i in sem_data[:12] %}{{ i.rotulo }}{{ ', ' if not loop.last }}{% endfor %}{% if sem_data|length > 12 %}…{% endif %}</p>{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Abordagem — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Abordagem de desenvolvimento e ciclo de vida</h1>
+<p class="sub">Domínio de desempenho 2.3 e processo de tailoring (Guia, seção 3.4.1). Avalie cada fator considerado na
+  seleção da abordagem (seção 2.3.4): <strong>1</strong> favorece a abordagem preditiva e <strong>5</strong> favorece a adaptativa.
+  A sugestão é apenas informativa: a decisão é da equipe.</p>
+<section class="cartao dica atalho-iniciante">
+  <strong>Primeira vez?</strong> Responda os fatores abaixo clicando de 1 a 5 (não precisa ser perfeito) e depois em
+  <em>Calcular sugestão</em>. Se o produto vai sendo descoberto com o cliente, como na maioria dos projetos de software,
+  a escolha costuma ser <strong>adaptativa</strong> ou <strong>híbrida</strong>. <a href="#decisao">Ir direto para a decisão ↓</a>
+</section>
+
+
+<form method="post">
+  {% for categoria in ['Produto', 'Projeto', 'Organização'] %}
+  <section class="cartao">
+    <h2>{{ categoria }}{% if medias_cat.get(categoria) %} <span class="mudo">média {{ '%.1f'|format(medias_cat[categoria]) }}</span>{% endif %}</h2>
+    {% for chave, cat, nome, esq, dir in pmbok.FATORES_ABORDAGEM if cat == categoria %}
+    <div class="fator">
+      <div class="fator-nome">{{ nome }}</div>
+      <div class="fator-escala">
+        <span class="fator-lado">{{ esq }}</span>
+        <div class="radios">
+          {% for n in range(1, 6) %}
+          <label class="radio-num"><input type="radio" name="{{ chave }}" value="{{ n }}" {{ 'checked' if respostas.get(chave) == n }}><span>{{ n }}</span></label>
+          {% endfor %}
+        </div>
+        <span class="fator-lado direita">{{ dir }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+  {% endfor %}
+
+  <section class="cartao destaque" id="decisao">
+    <h2 id="decisao">Decisão</h2>
+    {% if sugestao %}
+    <div class="espectro">
+      <div class="espectro-barra"><span class="espectro-marca" style="left: {{ ((media - 1) / 4 * 100)|round(1) }}%"></span></div>
+      <div class="espectro-rotulos"><span>Preditiva</span><span>Híbrida</span><span>Adaptativa</span></div>
+    </div>
+    <p>Média dos fatores: <strong>{{ '%.2f'|format(media) }}</strong> ({{ respostas|length }} de {{ pmbok.FATORES_ABORDAGEM|length }} avaliados).
+       Sugestão: <strong>{{ dict(pmbok.ABORDAGENS)[sugestao] }}</strong>.</p>
+    {% else %}
+    <p class="mudo">Avalie os fatores e clique em “Calcular sugestão” para ver a posição no espectro.</p>
+    {% endif %}
+
+    <div class="formulario">
+      <fieldset class="opcoes-abordagem">
+        <legend>Abordagem escolhida</legend>
+        {% for chave, rotulo in pmbok.ABORDAGENS %}
+        <label class="check"><input type="radio" name="abordagem" value="{{ chave }}" {{ 'checked' if projeto.abordagem == chave }}>
+          {{ rotulo }}{% if chave == sugestao %} <span class="selo selo-modulo">sugerida</span>{% endif %}</label>
+        {% endfor %}
+      </fieldset>
+      <label><span>Cadência de entrega <span class="mudo">(seção 2.3.2)</span></span>
+        {{ m.opcoes('cadencia', pmbok.CADENCIAS, projeto.cadencia, vazio='— selecione —') }}
+      </label>
+      <label>Justificativa da decisão de tailoring
+        <textarea name="justificativa" rows="3" placeholder="Por que esta abordagem? Há partes do produto com cadência diferente?">{{ projeto.abordagem_justificativa or '' }}</textarea>
+      </label>
+    </div>
+    <div class="acoes">
+      <button class="botao botao-sec" type="submit" name="acao" value="calcular">Calcular sugestão</button>
+      <button class="botao" type="submit" name="acao" value="salvar">Salvar decisão</button>
+    </div>
+  </section>
+</form>
+
+<section class="cartao" id="complexidade">
+  <h2>Complexidade do projeto <span class="fonte">modelos Cynefin e Stacey, seção 4.2.5</span></h2>
+  <p class="pequeno mudo">Uma segunda opinião para a escolha da abordagem: quanto mais incerteza, mais o projeto pede ciclos curtos.</p>
+  <form method="post" action="{{ url_for('metodos.complexidade', projeto_id=projeto.id) }}">
+    <fieldset><legend>Cynefin: como causa e efeito se comportam neste projeto?</legend>
+      {% for c, n, d in CYNEFIN %}<label class="check"><input type="radio" name="cynefin" value="{{ c }}" {{ 'checked' if projeto.cynefin == c }}>
+        <span><strong>{{ n }}</strong> <span class="mudo">— {{ d }}</span></span></label>{% endfor %}
+    </fieldset>
+    <div class="grade-2">
+      <label>Stacey: acordo sobre os requisitos <span class="ajuda">1 = todos concordam no que fazer · 5 = ninguém concorda</span>{{ m.escala('stacey_requisitos', projeto.stacey_requisitos) }}</label>
+      <label>Stacey: certeza sobre a tecnologia <span class="ajuda">1 = a equipe domina · 5 = tecnologia nova para todos</span>{{ m.escala('stacey_tecnologia', projeto.stacey_tecnologia) }}</label>
+    </div>
+    {% set st = sugestao_stacey(projeto.stacey_requisitos, projeto.stacey_tecnologia) %}
+    {% if st %}<div class="flash flash-aviso"><div>Pela matriz de Stacey, o projeto é <strong>{{ st[0] }}</strong>: {{ st[2] }} Abordagem que costuma servir: <strong>{{ dict(pmbok.ABORDAGENS)[st[1]] }}</strong>{% if projeto.abordagem and projeto.abordagem != st[1] %} (você escolheu {{ dict(pmbok.ABORDAGENS)[projeto.abordagem]|lower }}; tudo bem se a justificativa explicar){% endif %}.</div></div>{% endif %}
+    <div class="acoes"><button class="botao botao-sec" type="submit">Salvar complexidade</button></div>
+  </form>
+</section>
+{% endblock %}

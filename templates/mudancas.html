@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m14 with context %}
+{% block titulo %}Mudanças — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<div class="cabecalho">
+  <div>
+    <h1>Registro de mudanças</h1>
+<p class="exportar-linha">{{ m14.exportar(projeto, 'mudancas') }}</p>
+    <p class="sub">Artefato da seção 4.6.2: todas as mudanças solicitadas e seu status. Toda mudança deve vir com a avaliação dos novos
+      riscos que ela introduz, e as aprovadas devem ser comunicadas às partes interessadas (seção 2.5.7).</p>
+  </div>
+  <a class="botao" href="{{ url_for('trabalho.mudanca_nova', projeto_id=projeto.id) }}">+ Solicitar mudança</a>
+</div>
+
+{% if projeto.abordagem %}
+<div class="cartao dica"><strong>Tailoring ({{ dict(pmbok.ABORDAGENS)[projeto.abordagem] }}):</strong> {{ pmbok.TAILORING[projeto.abordagem].mudancas }}</div>
+{% endif %}
+
+{% if mudancas %}
+<section class="cartao">
+  <div class="tabela-rolagem">
+  <table class="tabela">
+    <thead><tr><th>Código</th><th>Mudança</th><th>Solicitante</th><th>Impactos</th><th>Status</th><th>Decisão</th><th>Comunicada</th></tr></thead>
+    <tbody>
+    {% for m in mudancas %}
+      <tr>
+        <td><a href="{{ url_for('trabalho.mudanca', projeto_id=projeto.id, mudanca_id=m.id) }}"><strong>{{ m.rotulo }}</strong></a></td>
+        <td><a href="{{ url_for('trabalho.mudanca', projeto_id=projeto.id, mudanca_id=m.id) }}">{{ m.titulo }}</a>
+          <div class="mudo pequeno">solicitada em {{ m.criado_em|data_br }}</div></td>
+        <td>{{ m.parte_nome or m.solicitante or '—' }}</td>
+        <td><span class="impactos" title="{{ m.impactos_avaliados }} de 6 dimensões avaliadas">{% for c, nome, _ in pmbok.IMPACTOS_MUDANCA %}<i class="{{ 'ok' if m[c] }}" title="{{ nome }}"></i>{% endfor %}</span></td>
+        <td><span class="selo selo-mud-{{ m.status }}">{{ dict(pmbok.STATUS_MUDANCA)[m.status] }}</span>{% if m.decisao_atrasada %} <span class="selo selo-opositor">aguardando</span>{% endif %}</td>
+        <td>{% if m.decidido_em %}{{ m.decidido_por }} <span class="mudo pequeno">· {{ m.decidido_em|data_br }}</span>{% else %}<span class="mudo">—</span>{% endif %}</td>
+        <td>{% if m.status in ('aprovada', 'implementada') %}{{ 'Sim' if m.comunicada else 'Não' }}{% else %}<span class="mudo">—</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% if por_parte %}
+<section class="cartao dica">
+  <h3>Mudanças por parte interessada</h3>
+  <p>{% for r in por_parte %}{{ r.nome }}: {{ r.n }}{{ ' · ' if not loop.last }}{% endfor %}</p>
+  <p class="mudo pequeno">Muitas mudanças vindas da mesma parte interessada podem indicar que ela não está engajada ou alinhada aos objetivos do projeto (Tabela 2-2).</p>
+</section>
+{% endif %}
+{% else %}
+<div class="vazio">
+  <h2>Nenhuma mudança registrada</h2>
+  <p>Registre aqui solicitações que alteram escopo, prazo, orçamento ou acordos já aprovados.</p>
+  <a class="botao" href="{{ url_for('trabalho.mudanca_nova', projeto_id=projeto.id) }}">Registrar a primeira</a>
+</div>
+{% endif %}
+{% endblock %}

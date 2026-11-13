@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m14 with context %}
+{% block titulo %}Escopo — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<div class="cabecalho">
+  <div>
+    <h1>Escopo e backlog</h1>
+<p class="exportar-linha">{{ m14.exportar(projeto, 'backlog') }}</p>
+    <p class="sub">O escopo decomposto em itens (seção 2.6.2.2). Os cinco quadradinhos mostram se o requisito está bem documentado:
+      claro, conciso, verificável, consistente e rastreável (seção 2.6.2.1).</p>
+  </div>
+  <a class="botao" href="{{ url_for('entrega.item_novo', projeto_id=projeto.id) }}">+ Item de escopo</a>
+</div>
+<form class="filtros" method="get">
+  <select name="status" data-enviar-ao-mudar aria-label="Status">
+    <option value="ativos" {{ 'selected' if filtro == 'ativos' }}>Em aberto (sem aceitos e cancelados)</option>
+    <option value="todos" {{ 'selected' if filtro == 'todos' }}>Todos</option>
+    {% for k, v in pmbok.STATUS_ITEM %}<option value="{{ k }}" {{ 'selected' if filtro == k }}>{{ v }}</option>{% endfor %}
+  </select>
+  <noscript><button class="botao botao-sec" type="submit">Filtrar</button></noscript>
+</form>
+{% if itens %}
+<form method="post" action="{{ url_for('entrega.itens_ordem', projeto_id=projeto.id) }}" class="cartao">
+  <div class="tabela-rolagem">
+  <table class="tabela">
+    <thead><tr><th>Ordem</th><th>Código</th><th>Item</th><th class="centro">Valor</th><th>Estimativa</th><th>Requisito</th><th>Status</th><th>Origem</th></tr></thead>
+    <tbody>
+    {% for i in itens %}
+      <tr class="{{ 'inativa' if i.status == 'cancelado' }}">
+        <td><input class="ordem" type="number" min="1" name="ordem_{{ i.id }}" value="{{ i.ordem or '' }}" aria-label="Ordem de {{ i.rotulo }}"></td>
+        <td><a href="{{ url_for('entrega.item', projeto_id=projeto.id, item_id=i.id) }}"><strong>{{ i.rotulo }}</strong></a></td>
+        <td style="padding-left: {{ 0.5 + i.nivel * 1.4 }}rem">
+          <a href="{{ url_for('entrega.item', projeto_id=projeto.id, item_id=i.id) }}">{{ i.titulo }}</a>
+          {% if i.moscow %}<span class="selo selo-moscow-{{ i.moscow }}">{{ dict(MOSCOW)[i.moscow] }}</span>{% endif %}
+          <div class="mudo pequeno">{{ dict(pmbok.TIPOS_ITEM)[i.tipo] }}{% if not i.folha %} · {{ i.folhas_feitas }}/{{ i.folhas_total }} itens concluídos{% endif %}
+            {% if i.id in fora_base %} · <span class="selo selo-opositor">fora da linha de base</span>{% endif %}</div>
+        </td>
+        <td class="centro">{{ i.valor or '—' }}</td>
+        <td>{% if i.folha %}{{ '%g'|format(i.estimativa) if i.estimativa else '—' }}{% endif %}</td>
+        <td><span class="impactos" title="{{ i.qualidade_n }} de 5 critérios">{% for k, nome, _ in pmbok.QUALIDADE_REQUISITO %}<i class="{{ 'ok' if i.qualidade[k] }}" title="{{ nome }}"></i>{% endfor %}</span></td>
+        <td>{% if i.folha %}<span class="selo selo-item-{{ i.status }}">{{ dict(pmbok.STATUS_ITEM)[i.status] }}</span>{% else %}<div class="barra" style="width: 70px"><span style="width: {{ (100 * i.folhas_feitas / i.folhas_total)|round if i.folhas_total else 0 }}%"></span></div>{% endif %}</td>
+        <td>{% if i.mudanca_codigo %}<a href="{{ url_for('trabalho.mudanca', projeto_id=projeto.id, mudanca_id=i.mudanca_id) }}">M-{{ i.mudanca_codigo }}</a>{% elif i.risco_codigo %}<a href="{{ url_for('incerteza.risco_detalhe', projeto_id=projeto.id, risco_id=i.risco_id) }}">R-{{ i.risco_codigo }}</a>{% else %}<span class="mudo">{{ i.parte_nome or '—' }}</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <div class="acoes"><button class="botao botao-sec" type="submit">Salvar ordem de prioridade</button></div>
+</form>
+{% elif total %}
+<div class="vazio"><p>Nenhum item com esse filtro.</p></div>
+{% else %}
+<div class="vazio">
+  <h2>Nenhum item de escopo</h2>
+  <p>Comece pelos itens maiores (épicos ou entregáveis) e decomponha em partes menores. Cada item deve ter critérios de aceite.</p>
+  <a class="botao" href="{{ url_for('entrega.item_novo', projeto_id=projeto.id) }}">Registrar o primeiro item</a>
+</div>
+{% endif %}
+{% endblock %}

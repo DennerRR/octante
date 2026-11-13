@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block titulo %}Trabalho do projeto — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Trabalho do projeto</h1>
+<p class="sub">Domínio de desempenho 2.5: estabelecer os processos e executar o trabalho, tratar questões, controlar mudanças
+  e aprender ao longo do projeto.</p>
+
+<div class="resumo-linha">
+  <a class="metrica" href="{{ url_for('trabalho.questoes', projeto_id=projeto.id) }}">
+    <span class="metrica-rotulo">Questões abertas</span>
+    <span class="metrica-valor">{{ resumo.questoes_abertas }}{% if resumo.questoes_atrasadas %} <span class="selo selo-opositor">{{ resumo.questoes_atrasadas }} atrasada{{ 's' if resumo.questoes_atrasadas > 1 }}</span>{% endif %}</span>
+  </a>
+  <div class="metrica">
+    <span class="metrica-rotulo">Tempo médio de resolução</span>
+    <span class="metrica-valor">{{ ('%.1f'|format(resumo.tempo_medio_resolucao)).replace('.', ',') ~ ' dias' if resumo.tempo_medio_resolucao is not none else '—' }}</span>
+  </div>
+  <a class="metrica" href="{{ url_for('trabalho.mudancas', projeto_id=projeto.id) }}">
+    <span class="metrica-rotulo">Mudanças aguardando decisão</span>
+    <span class="metrica-valor">{{ resumo.mudancas_pendentes }}</span>
+  </a>
+  <a class="metrica" href="{{ url_for('trabalho.mudancas', projeto_id=projeto.id) }}">
+    <span class="metrica-rotulo">Mudanças aprovadas / rejeitadas</span>
+    <span class="metrica-valor">{{ resumo.mudancas_aprovadas }} / {{ resumo.mudancas_rejeitadas }}</span>
+  </a>
+  <a class="metrica" href="{{ url_for('trabalho.licoes', projeto_id=projeto.id) }}">
+    <span class="metrica-rotulo">Lições aprendidas</span>
+    <span class="metrica-valor">{{ resumo.licoes }}</span>
+  </a>
+</div>
+
+<div class="duas-colunas">
+  <section class="cartao">
+    <div class="titulo-secao">
+      <h2>Questões abertas</h2>
+      <a class="botao botao-sec" href="{{ url_for('trabalho.questao_nova', projeto_id=projeto.id) }}">+ Questão</a>
+    </div>
+    {% if questoes %}
+    <ul class="historico">
+      {% for q in questoes %}
+      <li><a href="{{ url_for('trabalho.questao', projeto_id=projeto.id, questao_id=q.id) }}"><strong>{{ q.rotulo }}</strong> {{ q.titulo }}</a>
+        <span class="selo selo-prio-{{ q.prioridade }}">{{ dict(pmbok.PRIORIDADES)[q.prioridade] }}</span>
+        {% if q.atrasada %}<span class="selo selo-opositor">atrasada</span>{% elif q.prazo %}<span class="mudo pequeno">até {{ q.prazo|data_br }}</span>{% endif %}
+        {% if q.risco_codigo %}<span class="mudo pequeno">· veio de R-{{ q.risco_codigo }}</span>{% endif %}</li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="mudo">Nenhuma questão aberta.</p>{% endif %}
+  </section>
+
+  <section class="cartao">
+    <h2>Pontos de atenção</h2>
+    {% if alertas %}
+    <ul class="alertas">{% for a in alertas %}<li class="alerta alerta-{{ a.nivel }}"><a href="{{ a.link }}">{{ a.texto }}</a></li>{% endfor %}</ul>
+    {% else %}<p class="mudo">Nada a destacar.</p>{% endif %}
+  </section>
+</div>
+
+<div class="duas-colunas">
+  <section class="cartao">
+    <div class="titulo-secao">
+      <h2>Mudanças em andamento</h2>
+      <a class="botao botao-sec" href="{{ url_for('trabalho.mudanca_nova', projeto_id=projeto.id) }}">+ Mudança</a>
+    </div>
+    {% if mudancas %}
+    <ul class="historico">
+      {% for m in mudancas %}
+      <li><a href="{{ url_for('trabalho.mudanca', projeto_id=projeto.id, mudanca_id=m.id) }}"><strong>{{ m.rotulo }}</strong> {{ m.titulo }}</a>
+        <span class="selo selo-mud-{{ m.status }}">{{ dict(pmbok.STATUS_MUDANCA)[m.status] }}</span>
+        <span class="mudo pequeno">{{ m.impactos_avaliados }}/6 impactos avaliados</span></li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="mudo">Nenhuma mudança aguardando decisão ou implementação.</p>{% endif %}
+  </section>
+
+  <section class="cartao">
+    <div class="titulo-secao">
+      <h2>Lições recentes</h2>
+      <a class="botao botao-sec" href="{{ url_for('trabalho.licoes', projeto_id=projeto.id) }}#nova">+ Lição</a>
+    </div>
+    {% if licoes %}
+    <ul class="historico">
+      {% for l in licoes %}
+      <li><span class="selo selo-licao-{{ l.tipo }}">{{ 'Manter' if l.tipo == 'manter' else 'Melhorar' }}</span> {{ l.descricao }}
+        <span class="mudo pequeno">· {{ l.data|data_br }}</span></li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="mudo">Nenhuma lição registrada. Retrospectivas e revisões de marco são bons momentos para registrar.</p>{% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Priorização — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Priorizar</h1>
+<p class="sub">Etapa 3. {{ pmbok.ETAPAS_ENGAJAMENTO[2][2] }}</p>
+{{ m.fluxo_partes(fluxo, etapa, projeto) }}
+
+{% if partes %}
+<div class="duas-colunas">
+  <section class="cartao">
+    <h2>Grade poder × interesse</h2>
+    {% set analisadas = pontos %}
+    {% if analisadas %}
+    <svg class="grade-pi" viewBox="0 0 400 400" role="img" aria-label="Grade poder por interesse">
+      {% set x0, y0, tam = 50, 10, 340 %}
+      {% set corte = tam * 3 / 5 %}
+      <rect x="{{ x0 }}" y="{{ y0 }}" width="{{ corte }}" height="{{ tam - corte }}" class="q q1"/>
+      <rect x="{{ x0 + corte }}" y="{{ y0 }}" width="{{ tam - corte }}" height="{{ tam - corte }}" class="q q0"/>
+      <rect x="{{ x0 }}" y="{{ y0 + tam - corte }}" width="{{ corte }}" height="{{ corte }}" class="q q3"/>
+      <rect x="{{ x0 + corte }}" y="{{ y0 + tam - corte }}" width="{{ tam - corte }}" height="{{ corte }}" class="q q2"/>
+      <text x="{{ x0 + 6 }}" y="{{ y0 + 16 }}" class="q-rotulo">Manter satisfeita</text>
+      <text x="{{ x0 + tam - 6 }}" y="{{ y0 + 16 }}" class="q-rotulo" text-anchor="end">Gerenciar de perto</text>
+      <text x="{{ x0 + 6 }}" y="{{ y0 + tam - 8 }}" class="q-rotulo">Monitorar</text>
+      <text x="{{ x0 + tam - 6 }}" y="{{ y0 + tam - 8 }}" class="q-rotulo" text-anchor="end">Manter informada</text>
+      {% for n in range(1, 6) %}
+        <text x="{{ x0 + (n - 0.5) * tam / 5 }}" y="{{ y0 + tam + 16 }}" class="eixo" text-anchor="middle">{{ n }}</text>
+        <text x="{{ x0 - 8 }}" y="{{ y0 + tam - (n - 0.5) * tam / 5 + 4 }}" class="eixo" text-anchor="end">{{ n }}</text>
+      {% endfor %}
+      <text x="{{ x0 + tam / 2 }}" y="{{ y0 + tam + 34 }}" class="eixo-titulo" text-anchor="middle">Interesse →</text>
+      <text transform="translate(14 {{ y0 + tam / 2 }}) rotate(-90)" class="eixo-titulo" text-anchor="middle">Poder →</text>
+      {% for pt in analisadas %}
+      <g class="ponto ponto-{{ pt.s.atitude }}">
+        <title>{{ pt.s.nome }} — poder {{ pt.s.poder }}, interesse {{ pt.s.interesse }}, {{ dict(pmbok.ATITUDES)[pt.s.atitude]|lower }}</title>
+        <a href="{{ url_for('parte_detalhe', projeto_id=projeto.id, parte_id=pt.s.id) }}">
+          <circle cx="{{ x0 + pt.x * tam }}" cy="{{ y0 + tam - pt.y * tam }}" r="15"/>
+          <text x="{{ x0 + pt.x * tam }}" y="{{ y0 + tam - pt.y * tam + 4 }}" text-anchor="middle">{{ pt.s.iniciais }}</text>
+        </a>
+      </g>
+      {% endfor %}
+    </svg>
+    <div class="legenda">
+      {% for k, v in pmbok.ATITUDES %}<span><i class="bolinha ponto-{{ k }}"></i>{{ v }}</span>{% endfor %}
+    </div>
+    <p class="mudo pequeno">Alto = 4 ou 5. Os nomes dos quadrantes seguem a prática consolidada (grade de Mendelow); o PMBOK 7 orienta focar em quem tem mais poder e interesse.</p>
+    {% else %}
+    <p class="mudo">Preencha poder e interesse na <a href="{{ url_for('partes_analise', projeto_id=projeto.id) }}">análise</a> para ver a grade.</p>
+    {% endif %}
+  </section>
+
+  <section class="cartao">
+    <h2>Ordem de prioridade</h2>
+    <form method="post">
+      <div class="tabela-rolagem"><table class="tabela">
+        <thead><tr><th>Ordem</th><th>Parte interessada</th><th>Quadrante</th><th>P×I</th></tr></thead>
+        <tbody>
+        {% for s in partes %}
+          <tr>
+            <td><input class="ordem" type="number" min="1" name="ordem_{{ s.id }}" value="{{ s.prioridade_manual or '' }}" aria-label="Ordem de {{ s.nome }}"></td>
+            <td><a href="{{ url_for('parte_detalhe', projeto_id=projeto.id, parte_id=s.id) }}">{{ s.nome }}</a></td>
+            <td>{{ m.selo_quadrante(s.quadrante) }}</td>
+            <td>{{ (s.poder or 0) * (s.interesse or 0) if s.poder and s.interesse else '—' }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+      <p class="mudo pequeno">Ordem sugerida pela análise: {% for s in sugerida %}{{ s.nome }}{{ ', ' if not loop.last }}{% endfor %}.</p>
+      <div class="acoes">
+        <button class="botao" type="submit" name="acao" value="sugerida">Confirmar ordem sugerida</button>
+        <button class="botao botao-sec" type="submit" name="acao" value="manual">Salvar minha ordem</button>
+        <button class="botao botao-sec" type="submit" name="acao" value="limpar">Limpar</button>
+      </div>
+    </form>
+    <p class="mudo pequeno">Repriorize quando surgirem novas partes interessadas ou quando o cenário mudar.</p>
+  </section>
+</div>
+{% else %}
+<div class="vazio"><p>Identifique partes interessadas antes de priorizá-las.</p>
+  <a class="botao" href="{{ url_for('parte_nova', projeto_id=projeto.id) }}">Identificar parte interessada</a></div>
+{% endif %}
+{% endblock %}

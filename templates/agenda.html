@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block titulo %}Agenda — {{ projeto.nome }}{% endblock %}
+{% macro lista(ev) %}<ol class="agenda-lista">{% for e in ev %}<li class="{{ 'atrasado' if e.atrasado }}"><time>{{ e.data|data_br }}</time><span class="selo">{{ e.tipo }}</span><a href="{{ e.link }}">{{ e.texto }}</a></li>{% endfor %}</ol>{% endmacro %}
+{% block conteudo %}
+<div class="cabecalho"><div><h1>Agenda de prazos</h1>
+  <p class="sub">Todos os prazos do projeto num só lugar: questões, iterações, entregas, compras, premissas, decisões, benefícios e revisões de risco.</p></div>
+  <a class="botao botao-sec" href="{{ url_for('pmo.agenda_ics', projeto_id=projeto.id) }}" title="Importe no Google Agenda ou no Outlook">⬇ Levar para meu calendário (.ics)</a></div>
+{% if atrasados %}<section class="cartao perigo"><h2>Atrasados ({{ atrasados|length }})</h2>{{ lista(atrasados) }}</section>{% endif %}
+<section class="cartao"><h2>Próximos</h2>{% if proximos %}{{ lista(proximos) }}{% else %}<p class="mudo">Nenhum prazo futuro registrado.</p>{% endif %}</section>
+{% if passados %}<section class="cartao"><h2>Concluídos recentemente</h2>{{ lista(passados) }}</section>{% endif %}
+{% endblock %}

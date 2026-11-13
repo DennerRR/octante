@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Fases — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Fases do ciclo de vida</h1>
+<p class="sub">Seção 2.3.5. Cada fase tem critérios de saída verificados numa <strong>revisão de fase</strong> (phase gate) antes de seguir.
+  Em projetos com entregas de cadências diferentes, as fases podem se sobrepor ou se repetir (2.3.6).</p>
+
+{% if fases %}
+<div class="linha-fases" role="list">
+  {% for f in fases %}<a role="listitem" href="#fase{{ f.id }}" class="f-{{ 'atrasada' if f.atrasada else f.status }}" title="{{ dict(pmbok.STATUS_FASE)[f.status] }}">{{ f.nome }}</a>{% endfor %}
+</div>
+{% for f in fases %}
+<form method="post" action="{{ url_for('ciclo.fase', projeto_id=projeto.id, fase_id=f.id) }}" class="cartao formulario fase fase-{{ 'atrasada' if f.atrasada else f.status }}" id="fase{{ f.id }}">
+  <div class="titulo-secao">
+    <h2>{{ f.ordem }}. {{ f.nome }}</h2>
+    <span>{% if f.atrasada %}<span class="selo selo-opositor">término vencido</span> {% endif %}<span class="selo">{{ dict(pmbok.STATUS_FASE)[f.status] }}</span></span>
+  </div>
+  <div class="grade-4">
+    <label>Nome<input name="nome" value="{{ f.nome }}"></label>
+    <label>Ordem<input type="number" min="1" name="ordem" value="{{ f.ordem }}"></label>
+    <label>Início<input type="date" name="inicio" value="{{ f.inicio or '' }}"></label>
+    <label>Término<input type="date" name="fim" value="{{ f.fim or '' }}"></label>
+  </div>
+  <label>Objetivo da fase<input name="objetivo" value="{{ f.objetivo }}"></label>
+  <div class="duas-colunas">
+    <label>Critérios de saída <span class="ajuda">Um por linha: aceite de entregas, obrigações contratuais, metas de desempenho</span>
+      <textarea name="criterios_saida" rows="4">{{ f.criterios_saida }}</textarea></label>
+    <fieldset class="criterios"><legend>Revisão de fase: critérios atendidos</legend>
+      {% for c in f.criterios %}<label class="check"><input type="checkbox" name="criterio_ok" value="{{ loop.index0 }}" {{ 'checked' if loop.index0 in f.marcados }}> {{ c }}</label>
+      {% else %}<p class="mudo pequeno">Sem critérios de saída. Escreva ao lado e salve para poder marcá-los.</p>{% endfor %}
+    </fieldset>
+  </div>
+  <div class="grade-3">
+    <label>Status {{ m.opcoes('status', pmbok.STATUS_FASE, f.status) }}</label>
+    <label>Decisão da revisão {{ m.opcoes('revisao_decisao', pmbok.DECISOES_PORTAO, f.revisao_decisao, vazio='—') }}</label>
+    <label>Decidido por<input name="revisao_por" value="{{ f.revisao_por }}" placeholder="Ex.: patrocinador, comitê diretor"></label>
+  </div>
+  <label>Notas da revisão {% if f.revisao_data %}<span class="ajuda">Decisão registrada em {{ f.revisao_data|data_br }}</span>{% endif %}
+    <input name="revisao_notas" value="{{ f.revisao_notas }}" placeholder="Ressalvas, condições, próximos passos"></label>
+  <div class="acoes">
+    <button class="botao" type="submit">Salvar fase</button>
+    <button class="link-perigo" type="submit" name="acao" value="excluir">✕ remover fase</button>
+  </div>
+</form>
+{% endfor %}
+{% else %}
+<form method="post" class="vazio">
+  <input type="hidden" name="acao" value="sugeridas">
+  <h2>Nenhuma fase definida</h2>
+  <p>Comece com as fases sugeridas para a abordagem {{ dict(pmbok.ABORDAGENS).get(projeto.abordagem, 'híbrida')|lower }}, baseadas nos exemplos do PMBOK 7, e adapte ao seu projeto.
+    {% if projeto.abordagem == 'adaptativa' %}Projetos adaptativos com fluxo contínuo podem dispensar fases.{% endif %}</p>
+  <button class="botao" type="submit">Criar fases sugeridas</button>
+</form>
+{% endif %}
+
+<form method="post" class="cartao formulario destaque">
+  <input type="hidden" name="acao" value="nova">
+  <h2>Nova fase</h2>
+  <div class="grade-2">
+    <label>Nome<input name="nome" required></label>
+    <label>Objetivo<input name="objetivo"></label>
+  </div>
+  <label>Critérios de saída<textarea name="criterios_saida" rows="2"></textarea></label>
+  <div class="acoes"><button class="botao botao-sec" type="submit">Adicionar fase</button></div>
+</form>
+{% endblock %}

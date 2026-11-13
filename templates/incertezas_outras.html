@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block titulo %}Ambiguidade, complexidade e volatilidade — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Ambiguidade, complexidade e volatilidade</h1>
+<p class="sub">Nem toda incerteza é um risco com probabilidade e impacto. O PMBOK 7 trata separadamente a incerteza geral, a ambiguidade,
+  a complexidade e a volatilidade, cada uma com formas próprias de resposta (seções 2.8.1 a 2.8.4).</p>
+
+{% for n in pmbok.NATUREZAS_INCERTEZA %}
+<section class="cartao" id="{{ n.chave }}">
+  <div class="titulo-secao">
+    <h2>{{ n.nome }} <span class="fonte">seção {{ n.secao }}</span></h2>
+    <span class="mudo pequeno">{{ por_natureza[n.chave]|selectattr('status', 'ne', 'resolvida')|list|length }} em aberto</span>
+  </div>
+  <p class="mudo">{{ n.definicao }}</p>
+
+  {% for it in por_natureza[n.chave] %}
+  <form method="post" action="{{ url_for('incerteza.outra_atualizar', projeto_id=projeto.id, item_id=it.id) }}" class="item-incerteza formulario {{ 'resolvida' if it.status == 'resolvida' }}">
+    <div class="item-incerteza-topo">
+      <strong>{{ it.descricao }}</strong>
+      <span class="mudo pequeno">registrada em {{ it.criado_em|data_br }}</span>
+    </div>
+    <div class="respostas">
+      {% for k, nome, desc in n.respostas %}
+      <label class="chip" title="{{ desc }}"><input type="checkbox" name="respostas" value="{{ k }}" {{ 'checked' if k in it.respostas_lista }}><span>{{ nome }}</span></label>
+      {% endfor %}
+    </div>
+    <div class="grade-acoes">
+      <label>Ações<input name="acoes" value="{{ it.acoes }}" placeholder="O que será feito e por quem"></label>
+      <label>Status
+        <select name="status">{% for k, v in pmbok.STATUS_INCERTEZA %}<option value="{{ k }}" {{ 'selected' if it.status == k }}>{{ v }}</option>{% endfor %}</select>
+      </label>
+      <div class="acoes">
+        <button class="botao botao-sec" type="submit">Salvar</button>
+        <button class="link-perigo" type="submit" name="acao" value="excluir" title="Remover">✕</button>
+      </div>
+    </div>
+  </form>
+  {% endfor %}
+
+  <details class="nova-incerteza" {{ 'open' if not por_natureza[n.chave] }}>
+    <summary>+ Registrar {{ n.nome|lower }}</summary>
+    <form method="post" class="formulario">
+      <input type="hidden" name="natureza" value="{{ n.chave }}">
+      <label>Descrição<input name="descricao" required placeholder="{{ {'geral':'Ex.: não sabemos se a clínica terá internet estável','ambiguidade':'Ex.: cada área entende “consulta confirmada” de um jeito','complexidade':'Ex.: integração com 3 sistemas legados que se afetam entre si','volatilidade':'Ex.: rotatividade alta de desenvolvedores no mercado local'}[n.chave] }}"></label>
+      <fieldset>
+        <legend>Respostas possíveis</legend>
+        {% for k, nome, desc in n.respostas %}
+        <label class="check"><input type="checkbox" name="respostas" value="{{ k }}"> <span><strong>{{ nome }}</strong> <span class="mudo">— {{ desc }}</span></span></label>
+        {% endfor %}
+      </fieldset>
+      <label>Ações<input name="acoes"></label>
+      <div class="acoes"><button class="botao" type="submit">Registrar</button></div>
+    </form>
+  </details>
+</section>
+{% endfor %}
+{% endblock %}

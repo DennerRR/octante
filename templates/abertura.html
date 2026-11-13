@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m14 with context %}
+{% block titulo %}Abertura — {{ projeto.nome }}{% endblock %}
+{% macro campo(nome, rotulo, ajuda='', linhas=3) -%}
+<label><span>{{ rotulo }}{% if nome in essenciais %} <span class="obrig" title="Necessário para aprovar">*</span>{% endif %}</span>
+  {% if ajuda %}<span class="ajuda">{{ ajuda }}</span>{% endif %}
+  {% if linhas > 1 %}<textarea name="{{ nome }}" rows="{{ linhas }}">{{ ab[nome] or '' }}</textarea>
+  {% else %}<input name="{{ nome }}" value="{{ ab[nome] or '' }}">{% endif %}
+</label>
+{%- endmacro %}
+{% block conteudo %}
+<h1>Abertura do projeto</h1>
+<p class="sub">Artefatos de estratégia (seção 4.6.1): o <strong>termo de abertura</strong> autoriza formalmente o projeto e dá ao gerente
+  autoridade para usar recursos; a <strong>declaração de visão</strong> descreve o propósito de forma concisa e inspira a equipe.</p>
+
+{% if projeto.abordagem %}
+<div class="cartao dica"><strong>Tailoring ({{ dict(pmbok.ABORDAGENS)[projeto.abordagem] }}):</strong> {{ pmbok.TAILORING[projeto.abordagem].abertura }}</div>
+{% else %}
+<div class="cartao dica">Defina a <a href="{{ url_for('abordagem', projeto_id=projeto.id) }}">abordagem de desenvolvimento</a> para receber orientações de tailoring sobre estes artefatos.</div>
+{% endif %}
+
+<form method="post">
+  {% if ab.status == 'aprovado' %}
+  <div class="cartao dica">Termo aprovado{% if ab.aprovado_por %} por {{ ab.aprovado_por }}{% endif %}{% if ab.aprovado_em %} em {{ ab.aprovado_em|data_br }}{% endif %}.
+    Alterações devem passar pelo <a href="{{ url_for('trabalho.mudanca_nova', projeto_id=projeto.id, titulo='Alteração no termo de abertura') }}">registro de mudanças</a>.</div>
+  {% endif %}
+  <section class="cartao formulario">
+    <div class="titulo-secao">
+      <h2>Termo de abertura</h2>
+      <span class="selo selo-status-{{ ab.status }}">{{ {'rascunho':'Rascunho','em_revisao':'Em revisão','aprovado':'Aprovado'}[ab.status] }}</span>
+    </div>
+    {{ campo('proposito', 'Propósito e justificativa', 'Por que o projeto existe? Que problema ou oportunidade de negócio ele atende?') }}
+    {{ campo('objetivos', 'Objetivos mensuráveis', 'Um por linha. Ex.: reduzir o tempo de agendamento para menos de 2 minutos.') }}
+    {{ campo('criterios_sucesso', 'Critérios de sucesso', 'Como saberemos que o projeto teve sucesso e quem decide.') }}
+    {{ campo('requisitos_alto_nivel', 'Requisitos de alto nível') }}
+    <div class="grade-2">
+      {{ campo('premissas', 'Premissas', 'Fatores considerados verdadeiros sem prova.') }}
+      {{ campo('restricoes', 'Restrições', 'Fatores que limitam as opções (prazo, orçamento, tecnologia).') }}
+    </div>
+    {{ campo('riscos_alto_nivel', 'Riscos de alto nível', 'Ameaças e oportunidades já percebidas.') }}
+    <div class="grade-2">
+      {{ campo('marcos', 'Marcos / roadmap resumido', 'Ex.: MVP em março, release 1.0 em junho.') }}
+      {{ campo('orcamento', 'Orçamento resumido') }}
+    </div>
+    <div class="grade-2">
+      {{ campo('patrocinador', 'Patrocinador', '', 1) }}
+      {{ campo('gerente', 'Gerente do projeto', '', 1) }}
+    </div>
+    {{ campo('autoridade_gerente', 'Nível de autoridade do gerente', 'Decisões que pode tomar sem escalar (orçamento, equipe, escopo).', 2) }}
+
+    <div class="grade-3 aprovacao">
+      <label>Status
+        <select name="status">
+          {% for k, v in [('rascunho','Rascunho'),('em_revisao','Em revisão'),('aprovado','Aprovado')] %}
+          <option value="{{ k }}" {{ 'selected' if ab.status == k }}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Aprovado por<input name="aprovado_por" value="{{ ab.aprovado_por or '' }}"></label>
+      <label>Data da aprovação<input type="date" name="aprovado_em" value="{{ ab.aprovado_em or '' }}"></label>
+    </div>
+  </section>
+
+  <section class="cartao formulario" id="visao">
+    <h2>Declaração de visão</h2>
+    <p class="mudo">Preencha o modelo abaixo e clique em “Montar visão”, ou escreva o texto livremente.
+      O modelo segue o formato <em>elevator pitch</em> de Geoffrey Moore (referência complementar, não faz parte do PMBOK 7).</p>
+    <div class="grade-2">
+      <label>Para (público-alvo)<input name="visao_publico" value="{{ ab.visao_publico or '' }}" placeholder="pacientes da clínica"></label>
+      <label>que (necessidade)<input name="visao_necessidade" value="{{ ab.visao_necessidade or '' }}" placeholder="precisam marcar consultas sem ligar"></label>
+      <label>o (nome do produto)<input name="visao_produto" value="{{ ab.visao_produto or '' }}" placeholder="AgendaFácil"></label>
+      <label>é um(a) (categoria)<input name="visao_categoria" value="{{ ab.visao_categoria or '' }}" placeholder="aplicativo web de agendamento"></label>
+      <label>que (benefício principal)<input name="visao_beneficio" value="{{ ab.visao_beneficio or '' }}" placeholder="permite agendar em menos de 2 minutos"></label>
+      <label>Em comparação com (alternativa)<input name="visao_alternativa" value="{{ ab.visao_alternativa or '' }}" placeholder="o agendamento por telefone"></label>
+    </div>
+    <label>nosso produto (diferencial)<input name="visao_diferencial" value="{{ ab.visao_diferencial or '' }}" placeholder="funciona 24 horas e confirma por WhatsApp"></label>
+    <label>Texto da visão
+      <textarea name="visao_texto" rows="3">{{ ab.visao_texto or '' }}</textarea>
+    </label>
+    <div class="acoes">
+      <button class="botao botao-sec" type="submit" name="gerar_visao" value="1">Montar visão a partir do modelo</button>
+    </div>
+  </section>
+
+  <div class="acoes barra-salvar">
+    <button class="botao" type="submit">Salvar abertura</button>
+  </div>
+</form>
+{{ m14.pedir_revisao(projeto, 'abertura', projeto.id, 'Termo de abertura · ' ~ projeto.nome) }}
+{% endblock %}

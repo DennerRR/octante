@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block titulo %}Relatórios de status — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Relatórios de status</h1>
+<p class="sub">Artefato da seção 4.6.7. Ao emitir, o app congela a situação do dia (semáforo, escopo, valor agregado, previsão,
+  principais riscos e questões) para que o histórico mostre como o projeto evoluiu.</p>
+
+<form method="post" class="cartao formulario">
+  <h2>Emitir relatório</h2>
+  <div class="grade-2">
+    <label>Data<input type="date" name="data" value="{{ hoje }}" max="{{ hoje }}"></label>
+    <span></span>
+  </div>
+  <label>Resumo da situação<textarea name="resumo" rows="2" placeholder="Em uma ou duas frases: como está o projeto e o que precisa de decisão."></textarea></label>
+  <div class="grade-2">
+    <label>Realizações recentes <span class="ajuda">Sugerido a partir dos itens concluídos desde o último relatório</span><textarea name="realizacoes" rows="4">{{ sugestao.realizacoes }}</textarea></label>
+    <label>Próximos passos <span class="ajuda">Sugerido a partir do que está em andamento e do topo do backlog</span><textarea name="proximos_passos" rows="4">{{ sugestao.proximos_passos }}</textarea></label>
+  </div>
+  <div class="acoes"><button class="botao" type="submit">Emitir relatório</button></div>
+</form>
+
+<section class="cartao">
+  <h2>Histórico</h2>
+  {% if relatorios %}
+  <div class="tabela-rolagem"><table class="tabela">
+    <thead><tr><th>Data</th><th>Resumo</th>{% for s in relatorios[0].semaforo %}<th class="centro">{{ s.dimensao }}</th>{% endfor %}</tr></thead>
+    <tbody>
+    {% for r in relatorios %}
+    <tr><td><a href="{{ url_for('medicao.relatorio', projeto_id=projeto.id, relatorio_id=r.id) }}">{{ r.data|data_br }}</a></td>
+      <td>{{ r.resumo|truncate(90) or '—' }}</td>
+      {% for s in r.semaforo %}<td class="centro"><span class="sem-ponto sem-{{ s.status }}" title="{{ s.dimensao }}: {{ s.rotulo }}">{{ s.icone }}</span></td>{% endfor %}</tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<p class="mudo">Nenhum relatório emitido.</p>{% endif %}
+</section>
+{% endblock %}

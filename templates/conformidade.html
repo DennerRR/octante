@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Conformidade — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Conformidade e sustentabilidade</h1>
+<p class="sub">Princípio 1 (administração): integridade, cuidado, confiabilidade e conformidade com leis, regulamentos e políticas internas.
+  Também inclui o impacto do projeto no meio ambiente e na sociedade. Registre cada requisito, quem cuida e a evidência de que foi atendido.</p>
+
+<section class="cartao">
+  <h2>Cobertura por área</h2>
+  <ul class="cobertura-areas">
+    {% for chave, nome in pmbok.AREAS_CONFORMIDADE %}
+    {% set lista = cobertura[chave] %}
+    {% set pend = lista|selectattr('status', 'in', ['pendente', 'em_andamento'])|list|length %}
+    <li class="{{ 'vazia' if not lista }}">
+      <span class="area-nome">{{ nome }}</span>
+      {% if not lista %}<span class="mudo pequeno">não avaliada</span>
+      {% elif pend %}<span class="selo selo-nivel-medio">{{ pend }} em aberto</span>
+      {% else %}<span class="selo selo-apoiador">em dia</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="mudo pequeno">Se uma área não se aplica ao projeto, registre um requisito com status “Não se aplica” e o motivo: isso também é evidência de cuidado.</p>
+</section>
+
+{% for r in registros %}
+<form method="post" class="cartao formulario{{ ' cartao-alerta' if r.atrasado }}" id="c{{ r.id }}">
+  <input type="hidden" name="registro_id" value="{{ r.id }}">
+  <div class="grade-acoes">
+    <label>Requisito<input name="requisito" required value="{{ r.requisito }}"></label>
+    <label>Área {{ m.opcoes('area', pmbok.AREAS_CONFORMIDADE, r.area) }}</label>
+    <div class="acoes">{% if r.atrasado %}<span class="selo selo-opositor">prazo vencido</span>{% endif %}</div>
+  </div>
+  <label>Como atender<textarea name="como_atender" rows="2">{{ r.como_atender }}</textarea></label>
+  <div class="grade-4">
+    <label>Responsável<input name="responsavel" value="{{ r.responsavel }}"></label>
+    <label>Prazo<input type="date" name="prazo" value="{{ r.prazo or '' }}"></label>
+    <label>Status {{ m.opcoes('status', pmbok.STATUS_CONFORMIDADE, r.status) }}</label>
+    <label>Evidência<input name="evidencia" value="{{ r.evidencia }}" placeholder="Obrigatória ao marcar atendido"></label>
+  </div>
+  <div class="acoes">
+    <button class="botao botao-sec" type="submit">Salvar</button>
+    <button class="link-perigo" type="submit" name="acao" value="excluir">✕ remover</button>
+  </div>
+</form>
+{% endfor %}
+
+<form method="post" class="cartao formulario destaque">
+  <h2>Novo requisito</h2>
+  <div class="grade-2">
+    <label>Requisito<input name="requisito" required placeholder="Ex.: Consentimento do paciente para lembretes por WhatsApp (LGPD)"></label>
+    <label>Área {{ m.opcoes('area', pmbok.AREAS_CONFORMIDADE, None, vazio='Escolha…') }}</label>
+  </div>
+  <label>Como atender<textarea name="como_atender" rows="2"></textarea></label>
+  <div class="grade-3">
+    <label>Responsável<input name="responsavel"></label>
+    <label>Prazo<input type="date" name="prazo"></label>
+    <label>Status {{ m.opcoes('status', pmbok.STATUS_CONFORMIDADE, 'pendente') }}</label>
+  </div>
+  <input type="hidden" name="evidencia" value="">
+  <div class="acoes"><button class="botao" type="submit">Registrar requisito</button></div>
+</form>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block titulo %}Domínios — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Domínios de desempenho</h1>
+<p class="sub">Os 8 domínios são interativos, inter-relacionados e interdependentes e acontecem ao mesmo tempo durante todo o projeto.
+  Para cada um, registre se os resultados desejados estão sendo alcançados, com base nas tabelas de verificação de resultados do guia.</p>
+<div class="cartoes">
+  {% for d in dominios %}
+  <a class="cartao cartao-link" href="{{ url_for('dominio', projeto_id=projeto.id, chave=d.chave) }}">
+    <div class="titulo-secao">
+      <h3>{{ d.secao }} {{ d.nome }}</h3>
+      {% if d.modulo %}<span class="selo selo-modulo">módulo</span>{% else %}<span class="selo">próxima versão</span>{% endif %}
+    </div>
+    <p class="mudo">{{ d.resumo }}</p>
+    <div class="barra"><span style="width: {{ d.pct }}%"></span></div>
+    <p class="pequeno">{{ d.contagem.atendido }} atendidos · {{ d.contagem.parcial }} parciais · {{ d.contagem.nao_atendido }} não atendidos · {{ d.contagem.nao_avaliado }} não avaliados</p>
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}

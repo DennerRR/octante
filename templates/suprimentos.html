@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Aquisições e recursos — {{ projeto.nome }}{% endblock %}
+{% macro form_aquisicao(a) -%}
+<form method="post" class="formulario">
+  <input type="hidden" name="acao" value="aquisicao">{% if a %}<input type="hidden" name="registro_id" value="{{ a.id }}">{% endif %}
+  <div class="grade-3">
+    <label>O que será adquirido<input name="item" required value="{{ a.item if a }}"></label>
+    <label>Fazer ou comprar? {{ m.opcoes('decisao', pmbok.DECISOES_FAZER_COMPRAR, a.decisao if a else 'comprar') }}</label>
+    <label>Status {{ m.opcoes('status', pmbok.STATUS_AQUISICAO, a.status if a else 'planejada') }}</label>
+  </div>
+  <div class="grade-3">
+    <label>Fornecedor<input name="fornecedor" value="{{ a.fornecedor if a }}"></label>
+    <label>Documento de licitação {{ m.opcoes('documento', pmbok.DOCUMENTOS_LICITACAO, a.documento if a else '') }}</label>
+    <label>Tipo de contrato {{ m.opcoes('contrato', pmbok.TIPOS_CONTRATO, a.contrato if a else '') }}</label>
+  </div>
+  <div class="grade-4">
+    <label>Valor (R$)<input name="valor" inputmode="decimal" value="{{ m.num(a.valor) if a }}"></label>
+    <label>Necessária em<input type="date" name="necessario_em" value="{{ (a.necessario_em or '') if a }}"></label>
+    <label>Entrega prevista<input type="date" name="entrega_prevista" value="{{ (a.entrega_prevista or '') if a }}"></label>
+    <label>Nota do fornecedor (1–5) {{ m.escala('nota_desempenho', a.nota_desempenho if a else none, aria='Nota do fornecedor') }}</label>
+  </div>
+  <label>Critérios de desempenho e de escolha<textarea name="criterios" rows="2">{{ a.criterios if a }}</textarea></label>
+  <label>Observações<textarea name="observacoes" rows="2">{{ a.observacoes if a }}</textarea></label>
+  <div class="acoes"><button class="botao {{ 'botao-sec' if a }}" type="submit">{{ 'Salvar aquisição' if a else 'Registrar aquisição' }}</button></div>
+</form>
+{%- endmacro %}
+{% macro form_recurso(r) -%}
+<form method="post" class="formulario">
+  <input type="hidden" name="acao" value="recurso">{% if r %}<input type="hidden" name="registro_id" value="{{ r.id }}">{% endif %}
+  <div class="grade-3">
+    <label>Recurso<input name="nome" required value="{{ r.nome if r }}"></label>
+    <label>Tipo {{ m.opcoes('tipo', pmbok.TIPOS_RECURSO, r.tipo if r else 'equipamento') }}</label>
+    <label>Status {{ m.opcoes('status', pmbok.STATUS_RECURSO, r.status if r else 'planejado') }}</label>
+  </div>
+  <div class="grade-5">
+    <label>Quantidade<input name="quantidade" inputmode="decimal" value="{{ m.num(r.quantidade) if r }}"></label>
+    <label>Unidade<input name="unidade" value="{{ r.unidade if r }}"></label>
+    <label>Necessário em<input type="date" name="necessario_em" value="{{ (r.necessario_em or '') if r }}"></label>
+    <label>Prazo do pedido (dias)<input name="antecedencia_dias" type="number" min="0" max="730" value="{{ (r.antecedencia_dias if r.antecedencia_dias is not none else '') if r }}"></label>
+    <label>Já usado<input name="usado" inputmode="decimal" value="{{ m.num(r.usado) if r }}"></label>
+  </div>
+  <div class="grade-acoes">
+    <label>Armazenamento e descarte<input name="armazenamento_descarte" value="{{ r.armazenamento_descarte if r }}"></label>
+    <label>Desperdício<input name="desperdicio" inputmode="decimal" value="{{ m.num(r.desperdicio) if r }}"></label>
+    <div class="acoes"><button class="botao {{ 'botao-sec' if r }}" type="submit">{{ 'Salvar recurso' if r else 'Registrar recurso' }}</button></div>
+  </div>
+</form>
+{%- endmacro %}
+{% block conteudo %}
+<h1>Aquisições e recursos físicos</h1>
+<p class="sub">Seções 2.4.5, 2.4.6, 2.5.5 e 2.5.6. Tudo o que o projeto precisa de fora (contratos, licenças, equipamentos, serviços) e tudo o que não é pessoa
+  (material, equipamento, ambientes). O fornecedor contratado vira parte interessada do projeto.</p>
+
+<section class="cartao">
+  <h2>Aquisições <span class="fonte">seção 2.5.6</span></h2>
+  <p class="mudo">Decida primeiro o que fazer em casa e o que comprar (<em>make or buy</em>). Para o que for comprado, registre como será a escolha do fornecedor e o tipo de contrato.</p>
+  {% for a in aquisicoes %}
+  <details class="item-lista" id="a{{ a.id }}"{{ ' open' if a.sem_contrato_a_tempo or a.entrega_atrasada }}>
+    <summary>
+      <strong>{{ a.rotulo }} · {{ a.item }}</strong>
+      <span class="selo selo-status">{{ dict(pmbok.STATUS_AQUISICAO)[a.status] }}</span>
+      {% if a.necessidade_vencida %}<span class="selo selo-opositor">atrasada</span>{% elif a.sem_contrato_a_tempo %}<span class="selo selo-nivel-medio">contratar logo</span>{% endif %}
+      {% if a.entrega_atrasada %}<span class="selo selo-opositor">entrega atrasada</span>{% endif %}
+      <span class="mudo pequeno">{{ a.fornecedor or ('fazer internamente' if not a.externa else 'sem fornecedor') }}{% if a.valor %} · {{ a.valor|moeda }}{% endif %}</span>
+    </summary>
+    {{ form_aquisicao(a) }}
+    <div class="acoes acoes-extra">
+      {% if a.externa and a.fornecedor and not a.parte_id %}
+      <form method="post"><input type="hidden" name="acao" value="fornecedor_parte"><input type="hidden" name="registro_id" value="{{ a.id }}">
+        <button class="botao botao-sec" type="submit">Cadastrar fornecedor como parte interessada</button></form>
+      {% elif a.parte_id %}<span class="mudo pequeno">Fornecedor acompanhado em <a href="{{ url_for('parte_detalhe', projeto_id=projeto.id, parte_id=a.parte_id) }}">{{ a.parte_nome }}</a>.</span>{% endif %}
+      <form method="post"><input type="hidden" name="acao" value="excluir_aquisicao"><input type="hidden" name="registro_id" value="{{ a.id }}">
+        <button class="link-perigo" type="submit">✕ remover</button></form>
+    </div>
+  </details>
+  {% else %}<p class="mudo">Nenhuma aquisição registrada.</p>{% endfor %}
+  <div class="destaque-borda"><h3>Nova aquisição</h3>{{ form_aquisicao(none) }}</div>
+</section>
+
+<section class="cartao">
+  <h2>Recursos físicos <span class="fonte">seções 2.4.5 e 2.5.5</span></h2>
+  <p class="mudo">Planeje prazo de pedido, uso e descarte. Metas do PMBOK: menos manuseio e estoque, nenhuma espera por material, menos sucata e ambiente seguro.</p>
+  {% for r in recursos %}
+  <details class="item-lista" id="r{{ r.id }}"{{ ' open' if r.pedido_atrasado or r.pedido_proximo }}>
+    <summary>
+      <strong>{{ r.nome }}</strong>
+      <span class="selo selo-status">{{ dict(pmbok.STATUS_RECURSO)[r.status] }}</span>
+      {% if r.pedido_atrasado %}<span class="selo selo-opositor">pedido atrasado</span>{% elif r.pedido_proximo %}<span class="selo selo-nivel-medio">pedir até {{ r.pedir_ate|data_br }}</span>{% endif %}
+      <span class="mudo pequeno">{{ dict(pmbok.TIPOS_RECURSO)[r.tipo] }}{% if r.quantidade %} · {{ m.num(r.quantidade) }} {{ r.unidade }}{% endif %}{% if r.pct_desperdicio is not none %} · {{ r.pct_desperdicio }}% de desperdício{% endif %}</span>
+    </summary>
+    {{ form_recurso(r) }}
+    <div class="acoes acoes-extra"><form method="post"><input type="hidden" name="acao" value="excluir_recurso"><input type="hidden" name="registro_id" value="{{ r.id }}">
+      <button class="link-perigo" type="submit">✕ remover</button></form></div>
+  </details>
+  {% else %}<p class="mudo">Nenhum recurso registrado.</p>{% endfor %}
+  <div class="destaque-borda"><h3>Novo recurso</h3>{{ form_recurso(none) }}</div>
+</section>
+{% endblock %}

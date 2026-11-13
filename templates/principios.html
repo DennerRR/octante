@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block titulo %}Princípios — Octante{% endblock %}
+{% block conteudo %}
+<h1>Os 12 princípios de gerenciamento de projetos</h1>
+<p class="sub">The Standard for Project Management (primeira parte do livro), seção 3. Os princípios orientam o comportamento e não têm ordem nem peso.</p>
+<div class="cartao dica">Dentro de cada projeto, a página <strong>Princípios → Autoavaliação dos 12</strong> mostra as evidências de cada princípio
+  calculadas a partir dos registros (business case, conformidade, decisões, premissas, adoção, riscos, equipe…) e guarda a reflexão da equipe.</div>
+<div class="cartoes">
+  {% for nome, texto in pmbok.PRINCIPIOS %}
+  <div class="cartao">
+    <div class="num-principio">{{ loop.index }}</div>
+    <h3>{{ nome }}</h3>
+    <p>{{ texto }}</p>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

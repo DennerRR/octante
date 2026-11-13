@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block titulo %}Pré-mortem — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Pré-mortem</h1>
+<p class="sub">Técnica para descobrir riscos: imagine que já é o fim do projeto e <strong>ele fracassou</strong>. Cada pessoa escreve, em silêncio, por que isso aconteceu. Depois juntem as respostas aqui: cada linha vira um risco no registro.</p>
+<section class="cartao">
+  <form method="post">
+    <label>Por que o projeto fracassou? (um motivo por linha)
+      <textarea name="motivos" rows="8" required placeholder="Ex.: A TI da clínica não liberou acesso ao prontuário a tempo&#10;Ex.: Os pacientes idosos não conseguiram usar o app&#10;Ex.: A desenvolvedora principal saiu no meio do projeto"></textarea></label>
+    <div class="acoes"><button class="botao" type="submit">Criar riscos</button></div>
+  </form>
+  {% if vindos %}<p class="pequeno mudo">{{ vindos }} risco(s) deste projeto vieram de pré-mortens anteriores.</p>{% endif %}
+</section>
+<section class="cartao dica"><strong>Como conduzir (15 minutos):</strong> 1) explique o cenário de fracasso; 2) 5 minutos de escrita individual;
+  3) cada um lê um motivo por rodada até acabar; 4) agrupem repetidos; 5) registrem aqui e avaliem probabilidade e impacto.</section>
+{% endblock %}

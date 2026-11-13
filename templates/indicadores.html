@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as mc with context %}
+{% block titulo %}Indicadores — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Indicadores (KPIs)</h1>
+<p class="sub">Seção 2.7.1. Indicadores <strong>antecedentes</strong> preveem tendências e permitem agir antes de ultrapassar o limite;
+  indicadores <strong>de resultado</strong> medem o que já aconteceu. Meça só o que importa.</p>
+
+<div class="duas-colunas">
+  <form method="post" class="cartao formulario">
+    <h2>Novo indicador</h2>
+    <label>Nome<input name="nome" required placeholder="Ex.: Itens em andamento por pessoa"></label>
+    <div class="grade-2">
+      <label>Tipo {{ mc.opcoes('tipo', pmbok.TIPOS_INDICADOR, 'antecedente') }}</label>
+      <label>Categoria {{ mc.opcoes('categoria', pmbok.CATEGORIAS_METRICA, '', vazio='—') }}</label>
+      <label>Unidade<input name="unidade" placeholder="Ex.: itens, %, dias, pontos"></label>
+      <label>Sentido {{ mc.opcoes('direcao', pmbok.DIRECOES_METRICA, 'maior') }}</label>
+      <label>Meta<input name="meta" inputmode="decimal"></label>
+      <label>Limite <span class="ajuda">Valor que dispara o plano de exceção</span><input name="limite" inputmode="decimal"></label>
+    </div>
+    <label>Por que importa <span class="ajuda">Ligação com o business case, as linhas de base ou os requisitos</span><input name="relevancia"></label>
+    <div class="acoes"><button class="botao" type="submit">Criar indicador</button></div>
+  </form>
+  <section class="cartao">
+    <h2>Métricas eficazes (SMART) <span class="fonte">2.7.1.2</span></h2>
+    <ul class="lista-simples">{% for nome, desc in pmbok.SMART %}<li><strong>{{ nome }}:</strong> {{ desc }}</li>{% endfor %}</ul>
+    <h3 class="espaco">Armadilhas <span class="fonte">2.7.4</span></h3>
+    <ul class="lista-simples">{% for nome, desc in pmbok.ARMADILHAS_MEDICAO %}<li><strong>{{ nome }}:</strong> {{ desc }}</li>{% endfor %}</ul>
+  </section>
+</div>
+
+{% for m in metricas %}
+<section class="cartao indicador sem-borda-{{ m.status }}" id="m{{ m.id }}">
+  <div class="titulo-secao">
+    <h2>{{ m.nome }}</h2>
+    <span class="selo sem-selo-{{ m.status }}">{{ pmbok.STATUS_SEMAFORO[m.status][1] }} {{ pmbok.STATUS_SEMAFORO[m.status][0] }}</span>
+  </div>
+  <p class="mudo pequeno">{{ 'Antecedente' if m.tipo == 'antecedente' else 'De resultado' }}{% if m.categoria %} · {{ dict(pmbok.CATEGORIAS_METRICA)[m.categoria] }}{% endif %}
+    · {{ dict(pmbok.DIRECOES_METRICA)[m.direcao]|lower }}{% if m.meta is not none %} · meta {{ '%g'|format(m.meta) }}{% endif %}{% if m.limite is not none %} · limite {{ '%g'|format(m.limite) }}{% endif %}
+    {% if m.relevancia %}<br>Por que importa: {{ m.relevancia }}{% endif %}</p>
+  <div class="indicador-corpo">
+    <div>
+      {% if m.ultima %}
+      <p class="destaque-numero">{{ '%g'|format(m.ultima.valor) }} <span class="mudo pequeno">{{ m.unidade }}</span></p>
+      <p class="mudo pequeno">medido em {{ m.ultima.data|data_br }}{% if m.tendencia %} · {{ '▲ melhorou' if m.tendencia == 'melhora' else '▼ piorou' }}{% endif %}</p>
+      {% else %}<p class="mudo">Sem medições.</p>{% endif %}
+      <form method="post" action="{{ url_for('medicao.indicador', projeto_id=projeto.id, metrica_id=m.id) }}" class="formulario linha-medicao">
+        <label>Valor<input name="valor" inputmode="decimal" required></label>
+        <label>Data<input type="date" name="data" value="{{ hoje }}" max="{{ hoje }}"></label>
+        <label>Nota<input name="nota"></label>
+        <button class="botao botao-sec" type="submit">Registrar</button>
+      </form>
+    </div>
+    <div>{% if m.grafico %}{{ mc.grafico(m.grafico, 'Ver medições') }}{% elif m.medicoes %}<p class="mudo pequeno">O gráfico aparece a partir da segunda medição.</p>{% endif %}</div>
+  </div>
+  <form method="post" action="{{ url_for('medicao.indicador', projeto_id=projeto.id, metrica_id=m.id) }}">
+    <button class="link-perigo" type="submit" name="acao" value="excluir">✕ remover indicador</button>
+  </form>
+</section>
+{% else %}
+<div class="vazio"><p>Nenhum indicador personalizado. Os indicadores de prazo, custo, escopo e fluxo já são calculados no painel;
+  use esta página para o que for específico do projeto, como defeitos por release ou satisfação da equipe.</p></div>
+{% endfor %}
+{% endblock %}

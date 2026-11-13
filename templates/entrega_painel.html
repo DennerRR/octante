@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Entrega — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+{% set un = projeto.unidade_estimativa if resumo.base == 'estimativa' else 'itens' %}
+<div class="cabecalho">
+  <div>
+    <h1>Entrega</h1>
+    <p class="sub">Domínio de desempenho 2.6: entregar o escopo e a qualidade que o projeto foi criado para alcançar.
+      O escopo é decomposto em itens com critérios de aceite, e o valor só é realizado quando as partes interessadas aceitam as entregas.</p>
+  </div>
+  <a class="botao" href="{{ url_for('entrega.item_novo', projeto_id=projeto.id) }}">+ Item de escopo</a>
+</div>
+{% if projeto.abordagem %}<div class="cartao dica"><strong>Tailoring ({{ dict(pmbok.ABORDAGENS)[projeto.abordagem] }}):</strong> {{ pmbok.TAILORING[projeto.abordagem].entrega }}</div>{% endif %}
+
+<div class="resumo-linha">
+  <a class="metrica" href="{{ url_for('entrega.itens', projeto_id=projeto.id) }}">
+    <span class="metrica-rotulo">Escopo aceito</span>
+    <span class="metrica-valor">{{ resumo.pct_aceito }}%</span>
+    <span class="mudo pequeno">{{ '%g'|format(resumo.aceito) }} de {{ '%g'|format(resumo.total) }} {{ un }}</span>
+    <div class="barra"><span style="width: {{ resumo.pct_aceito }}%"></span></div>
+  </a>
+  <a class="metrica" href="{{ url_for('entrega.quadro', projeto_id=projeto.id) }}">
+    <span class="metrica-rotulo">Aguardando aceite</span>
+    <span class="metrica-valor">{{ resumo.aguardando_aceite }}</span>
+    <span class="mudo pequeno">concluídos, ainda não aceitos</span>
+  </a>
+  <a class="metrica" href="{{ url_for('entrega.quadro', projeto_id=projeto.id) }}">
+    <span class="metrica-rotulo">Em andamento</span>
+    <span class="metrica-valor">{{ resumo.wip }}{% if resumo.limite_wip %}<span class="mudo pequeno"> / limite {{ resumo.limite_wip }}</span>{% endif %}</span>
+  </a>
+  <a class="metrica" href="{{ url_for('entrega.itens', projeto_id=projeto.id) }}">
+    <span class="metrica-rotulo">Requisitos bem documentados</span>
+    <span class="metrica-valor">{{ resumo.bem_documentados }}<span class="mudo pequeno"> de {{ resumo.ativos }} a fazer</span></span>
+  </a>
+  <a class="metrica" href="{{ url_for('entrega.beneficios', projeto_id=projeto.id) }}">
+    <span class="metrica-rotulo">Benefícios realizados</span>
+    <span class="metrica-valor">{{ resumo.beneficios_realizados }}<span class="mudo pequeno"> de {{ resumo.beneficios }}</span></span>
+  </a>
+</div>
+
+<div class="duas-colunas">
+  <section class="cartao">
+    <h2>Pontos de atenção</h2>
+    {% if alertas %}<ul class="alertas">{% for a in alertas %}<li class="alerta alerta-{{ a.nivel }}"><a href="{{ a.link }}">{{ a.texto }}</a></li>{% endfor %}</ul>
+    {% else %}<p class="mudo">Nada a destacar.</p>{% endif %}
+    <h3 class="espaco">Fluxo dos últimos 30 dias</h3>
+    <p>Trabalho novo: <strong>{{ '%g'|format(resumo.fluxo_criados) }}</strong> {{ un }} · Concluído: <strong>{{ '%g'|format(resumo.fluxo_concluidos) }}</strong> {{ un }}</p>
+    <p class="mudo pequeno">Trabalho novo é o que entrou depois da linha de base. Se entra mais trabalho do que é concluído, o projeto continua sem fim (seção 2.5.7).</p>
+  </section>
+
+  <section class="cartao" id="linha-base">
+    <h2>Linha de base do escopo <span class="fonte">seção 4.6.5</span></h2>
+    {% set lb = resumo.linha_base %}
+    {% if lb %}
+    <p>Versão {{ lb.versao }}, definida em <strong>{{ lb.criada_em|data_br }}</strong>{% if lb.motivo %} ({{ lb.motivo }}){% endif %}:
+      {{ lb.dados.n }} itens{% if lb.dados.total_estimativa %}, {{ '%g'|format(lb.dados.total_estimativa) }} {{ projeto.unidade_estimativa }}{% endif %}.</p>
+    <p>Depois dela entraram <strong>{{ resumo.novos_pos_base|length }}</strong> itens, sendo
+      <strong>{{ resumo.sem_mudanca|length }}</strong> sem mudança aprovada.</p>
+    {% else %}
+    <p class="mudo">Ainda não há linha de base. Ela é a versão aprovada do escopo, usada para comparar com o que realmente acontece.</p>
+    {% endif %}
+    <form method="post" action="{{ url_for('entrega.linha_base', projeto_id=projeto.id) }}" class="formulario">
+      <label>{{ 'Motivo da nova linha de base' if lb else 'Observação (opcional)' }}
+        <input name="motivo" placeholder="{{ 'Ex.: mudança M-1 aprovada' if lb else 'Ex.: escopo aprovado pela patrocinadora' }}" {{ 'required' if lb }}></label>
+      <div class="acoes"><button class="botao botao-sec" type="submit">{{ 'Refazer linha de base' if lb else 'Definir linha de base' }}</button></div>
+    </form>
+  </section>
+</div>
+
+<form method="post" class="cartao formulario" id="parametros">
+  <h2>Definição de pronto e parâmetros</h2>
+  <label>Definição de pronto <span class="ajuda">Lista de critérios que todo item precisa atender para ser considerado pronto para uso pelo cliente. Um por linha.</span>
+    <textarea name="definicao_pronto" rows="4" placeholder="Código revisado por outra pessoa&#10;Testes automatizados passando&#10;Publicado no ambiente de homologação">{{ projeto.definicao_pronto or '' }}</textarea></label>
+  <div class="grade-2">
+    <label>Unidade das estimativas {{ m.opcoes('unidade_estimativa', pmbok.UNIDADES_ESTIMATIVA, projeto.unidade_estimativa) }}</label>
+    <label>Limite de trabalho em andamento (WIP) <span class="ajuda">Opcional. Ajuda a equipe a terminar antes de começar itens novos.</span>
+      <input type="number" min="1" name="limite_wip" value="{{ projeto.limite_wip or '' }}"></label>
+  </div>
+  <div class="acoes"><button class="botao" type="submit">Salvar</button></div>
+</form>
+{% endblock %}

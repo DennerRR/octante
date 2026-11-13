@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block titulo %}Cronograma e orçamento — {{ projeto.nome }}{% endblock %}
+{% macro num(v) -%}{{ ('%.2f'|format(v)).replace('.', ',') if v is number else '' }}{%- endmacro %}
+{% block conteudo %}
+<h1>Cronograma e orçamento</h1>
+<p class="sub">Domínio de Planejamento (seções 2.4.2.3 e 2.4.2.4). Datas e custos planejados por item formam as linhas de base de prazo e custo
+  usadas no valor agregado; as iterações organizam o trabalho em timeboxes. Preencha só o que a sua abordagem precisa.</p>
+{% if projeto.abordagem %}<div class="cartao dica"><strong>Tailoring ({{ dict(pmbok.ABORDAGENS)[projeto.abordagem] }}):</strong> {{ pmbok.TAILORING[projeto.abordagem].cronograma }}</div>{% endif %}
+
+<div class="duas-colunas">
+  <form method="post" class="cartao formulario">
+    <input type="hidden" name="acao" value="datas">
+    <h2>Datas do projeto</h2>
+    <div class="grade-2">
+      <label>Início<input type="date" name="data_inicio" value="{{ projeto.data_inicio or '' }}"></label>
+      <label>Término planejado<input type="date" name="data_fim_planejada" value="{{ projeto.data_fim_planejada or '' }}"></label>
+    </div>
+    <p class="mudo pequeno">O término planejado é comparado com a previsão calculada pela velocidade ou pela vazão.</p>
+    <div class="acoes"><button class="botao botao-sec" type="submit">Salvar datas</button></div>
+  </form>
+  <form method="post" class="cartao formulario">
+    <input type="hidden" name="acao" value="iteracao">
+    <h2>Nova iteração</h2>
+    <div class="grade-3">
+      <label>Nome<input name="nome" required placeholder="Sprint {{ iteracoes|length + 1 }}"></label>
+      <label>Início<input type="date" name="inicio" required></label>
+      <label>Fim<input type="date" name="fim" required></label>
+    </div>
+    <div class="grade-2">
+      <label>Meta da iteração<input name="meta"></label>
+      <label>Capacidade ({{ projeto.unidade_estimativa }})<input name="capacidade" inputmode="decimal"></label>
+    </div>
+    <div class="acoes"><button class="botao botao-sec" type="submit">Criar iteração</button></div>
+  </form>
+</div>
+
+{% if iteracoes %}
+<section class="cartao">
+  <h2>Iterações</h2>
+  <div class="tabela-rolagem"><table class="tabela">
+    <thead><tr><th>Iteração</th><th>Período</th><th>Meta</th><th>Capacidade</th><th>Planejado</th><th>Concluído</th><th></th></tr></thead>
+    <tbody>
+    {% for it in iteracoes %}{% set v = vel.get(it.id) %}
+    <tr><td><strong>{{ it.nome }}</strong>{% if v and v.atual %} <span class="selo selo-modulo">atual</span>{% elif v and v.encerrada %} <span class="mudo pequeno">encerrada</span>{% endif %}</td>
+      <td>{{ it.inicio|data_br }} a {{ it.fim|data_br }}</td><td>{{ it.meta or '—' }}</td>
+      <td>{{ '%g'|format(it.capacidade) if it.capacidade else '—' }}</td>
+      <td>{{ '%g'|format(v.planejado) if v else '—' }}{% if v and it.capacidade and v.planejado > it.capacidade %} <span class="selo selo-opositor">acima da capacidade</span>{% endif %}</td>
+      <td>{{ '%g'|format(v.concluido) if v and (v.encerrada or v.atual) else '—' }}</td>
+      <td><form method="post"><input type="hidden" name="acao" value="excluir_iteracao"><input type="hidden" name="iteracao_id" value="{{ it.id }}"><button class="link-perigo" type="submit" title="Remover">✕</button></form></td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endif %}
+
+<form method="post" class="cartao">
+  <input type="hidden" name="acao" value="itens">
+  <div class="titulo-secao"><h2>Itens: iteração, datas e custos</h2><span class="mudo pequeno">Planejado {{ total_plan|moeda }} · real {{ total_real|moeda }}</span></div>
+  {% if itens %}
+  <div class="tabela-rolagem"><table class="tabela tabela-edicao cronograma">
+    <thead><tr><th>Item</th><th>Status</th><th>Iteração</th><th>Início planejado</th><th>Término planejado</th><th>Custo planejado (R$)</th><th>Custo real (R$)</th></tr></thead>
+    <tbody>
+    {% for i in itens %}
+    <tr class="{{ 'atrasado' if i.fim_planejado and i.fim_planejado < hoje_iso and not i.feito }}">
+      <td><a href="{{ url_for('entrega.item', projeto_id=projeto.id, item_id=i.id) }}"><strong>{{ i.rotulo }}</strong> {{ i.titulo }}</a>
+        {% if i.fim_planejado and i.fim_planejado < hoje_iso and not i.feito %}<div><span class="selo selo-opositor">término planejado vencido</span></div>{% endif %}</td>
+      <td><span class="selo selo-item-{{ i.status }}">{{ dict(pmbok.STATUS_ITEM)[i.status] }}</span></td>
+      <td><select name="iteracao_{{ i.id }}" aria-label="Iteração de {{ i.rotulo }}"><option value="">—</option>{% for it in iteracoes %}<option value="{{ it.id }}" {{ 'selected' if i.iteracao_id == it.id }}>{{ it.nome }}</option>{% endfor %}</select></td>
+      <td><input type="date" name="inicio_{{ i.id }}" value="{{ i.inicio_planejado or '' }}" aria-label="Início planejado de {{ i.rotulo }}"></td>
+      <td><input type="date" name="fim_{{ i.id }}" value="{{ i.fim_planejado or '' }}" aria-label="Término planejado de {{ i.rotulo }}"></td>
+      <td><input name="custo_planejado_{{ i.id }}" inputmode="decimal" value="{{ num(i.custo_planejado) }}" aria-label="Custo planejado de {{ i.rotulo }}"></td>
+      <td><input name="custo_real_{{ i.id }}" inputmode="decimal" value="{{ num(i.custo_real) }}" aria-label="Custo real de {{ i.rotulo }}"></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <div class="acoes barra-salvar"><button class="botao" type="submit">Salvar cronograma e custos</button></div>
+  <p class="mudo pequeno">Orçamento do projeto = soma dos custos planejados + reserva de contingência + reserva de gerenciamento (Figura 2-18).
+    Defina a <a href="{{ url_for('entrega.painel', projeto_id=projeto.id) }}#linha-base">linha de base</a> depois de planejar para congelar estes valores.</p>
+  {% else %}<p class="mudo">Registre itens de escopo em <a href="{{ url_for('entrega.itens', projeto_id=projeto.id) }}">Entrega</a> para planejar datas e custos.</p>{% endif %}
+</form>
+{% endblock %}

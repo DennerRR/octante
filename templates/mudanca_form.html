@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m14 with context %}
+{% import '_macros.html' as mc with context %}
+{% block titulo %}{{ 'Nova mudança' if novo else m.rotulo }} — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<p><a href="{{ url_for('trabalho.mudancas', projeto_id=projeto.id) }}">← Registro de mudanças</a></p>
+<h1>{{ 'Solicitar mudança' if novo else m.rotulo ~ ' · ' ~ m.titulo }}</h1>
+{% if not novo %}{{ m14.completude_barra(completude('mudanca', m)) }}{% endif %}
+{% if not novo %}<p class="sub">Solicitada em {{ m.criado_em|data_br }} · <span class="selo selo-mud-{{ m.status }}">{{ dict(pmbok.STATUS_MUDANCA)[m.status] }}</span></p>{% endif %}
+
+<form method="post" class="formulario">
+  <section class="cartao">
+    <h2>Solicitação</h2>
+    <label>Título *<input name="titulo" required value="{{ m.titulo or '' }}" placeholder="Ex.: Incluir pagamento online da consulta"></label>
+    <label>Descrição<textarea name="descricao" rows="2">{{ m.descricao or '' }}</textarea></label>
+    <label>Justificativa <span class="ajuda">Qual valor ou necessidade motiva a mudança?</span><textarea name="justificativa" rows="2">{{ m.justificativa or '' }}</textarea></label>
+    <div class="grade-2">
+      <label>Parte interessada solicitante
+        <select name="parte_id"><option value="">—</option>
+          {% for s in partes %}<option value="{{ s.id }}" {{ 'selected' if m.parte_id == s.id }}>{{ s.nome }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Solicitante (se não estiver no registro)<input name="solicitante" value="{{ m.solicitante or '' }}"></label>
+    </div>
+  </section>
+
+  <section class="cartao">
+    <div class="titulo-secao">
+      <h2>Avaliação holística dos impactos <span class="fonte">Tabela 2-7</span></h2>
+      <span class="mudo pequeno" id="contador-impactos">{{ m.impactos_avaliados or 0 }}/6 avaliados</span>
+    </div>
+    <p class="mudo">
+      {% if m.exige_avaliacao %}Obrigatória antes de aprovar ou rejeitar. Escreva “sem impacto” quando for o caso.
+      {% else %}Na abordagem adaptativa a avaliação é recomendada, mas não obrigatória.{% endif %}</p>
+    <div class="grade-2">
+      {% for c, nome, ajuda in pmbok.IMPACTOS_MUDANCA %}
+      <label>{{ nome }} <span class="ajuda">{{ ajuda }}</span><textarea name="{{ c }}" rows="2" data-impacto>{{ m[c] or '' }}</textarea></label>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="cartao">
+    <h2>Decisão e acompanhamento</h2>
+    <div class="grade-3">
+      <label>Status {{ mc.opcoes('status', pmbok.STATUS_MUDANCA, m.status) }}</label>
+      <label>Decidido por <span class="ajuda">Patrocinador, comitê de controle de mudanças ou product owner</span><input name="decidido_por" value="{{ m.decidido_por or '' }}"></label>
+      <label>Data da decisão<input value="{{ m.decidido_em|data_br if m.decidido_em else 'registrada ao decidir' }}" disabled></label>
+    </div>
+    <label>Notas da decisão<textarea name="notas_decisao" rows="2">{{ m.notas_decisao or '' }}</textarea></label>
+    <label class="check"><input type="checkbox" name="comunicada" value="1" {{ 'checked' if m.comunicada }}> Mudança comunicada às partes interessadas afetadas</label>
+  </section>
+
+  <div class="acoes barra-salvar">
+    <button class="botao" type="submit">{{ 'Registrar' if novo else 'Salvar' }}</button>
+    <a class="botao botao-sec" href="{{ url_for('trabalho.mudancas', projeto_id=projeto.id) }}">Cancelar</a>
+  </div>
+</form>
+
+{% if not novo and m.status in ('aprovada', 'implementada') %}
+<section class="cartao" id="escopo">
+  <div class="titulo-secao"><h2>Itens de escopo desta mudança</h2>
+    <a class="botao botao-sec" href="{{ url_for('entrega.item_novo', projeto_id=projeto.id, mudanca=m.id) }}">+ Criar item a partir da mudança</a></div>
+  <p class="mudo pequeno">Mudanças aprovadas são incorporadas ao backlog e ao escopo do projeto (seção 2.5.7).</p>
+  {% if itens %}<ul class="historico">{% for x in itens %}<li><a href="{{ url_for('entrega.item', projeto_id=projeto.id, item_id=x.id) }}"><strong>I-{{ x.codigo }}</strong> {{ x.titulo }}</a> <span class="selo selo-item-{{ x.status }}">{{ dict(pmbok.STATUS_ITEM)[x.status] }}</span></li>{% endfor %}</ul>
+  {% else %}<p class="mudo">Nenhum item ligado a esta mudança ainda.</p>{% endif %}
+</section>
+{% endif %}
+
+{% if not novo %}
+<form method="post" class="cartao perigo">
+  <input type="hidden" name="acao" value="excluir">
+  <p>O registro de mudanças deve ser completo: em vez de excluir, prefira rejeitar a mudança. Excluir só faz sentido para registros feitos por engano.</p>
+  <button class="botao botao-perigo" type="submit">Excluir registro</button>
+</form>
+{% endif %}
+{% if not novo %}{{ m14.pedir_revisao(projeto, 'mudanca', m.id, m.rotulo ~ ' ' ~ m.titulo) }}{% endif %}
+{% endblock %}

@@ -1,0 +1,23 @@
+<div class="grade-4">
+  <label>Data<input type="date" name="data" value="{{ hoje }}" required></label>
+  <label>Método
+    <select name="metodo">
+      {% for k, v in pmbok.METODOS_COMUNICACAO %}<option value="{{ k }}" {{ 'selected' if k == 'interativa' }}>{{ pmbok.METODOS_COMUNICACAO_CURTO[k] }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Tipo
+    <select name="tipo"><option value="">—</option>
+      {% for k, v in pmbok.TIPOS_COMUNICACAO %}<option value="{{ k }}">{{ pmbok.TIPOS_COMUNICACAO_CURTO[k] }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Satisfação percebida
+    <select name="satisfacao"><option value="">não avaliada</option>
+      {% for n, r in [(1,'1 · muito insatisfeita'),(2,'2'),(3,'3 · neutra'),(4,'4'),(5,'5 · muito satisfeita')] %}<option value="{{ n }}">{{ r }}</option>{% endfor %}
+    </select>
+  </label>
+</div>
+<div class="grade-2">
+  <label>Resumo<textarea name="resumo" rows="2" placeholder="Ex.: Demo da sprint 3, apresentação do protótipo"></textarea></label>
+  <label>Feedback recebido<textarea name="feedback" rows="2" placeholder="O que a parte interessada disse? Concordou com a mensagem?"></textarea></label>
+</div>
+<div class="acoes"><button class="botao" type="submit">Registrar interação</button></div>

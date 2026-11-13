@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block titulo %}Fluxo do projeto — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Fluxo do projeto</h1>
+<p class="sub">O caminho do começo ao fim, em 5 fases. Siga na ordem: clique numa etapa para abrir a tela. ✓ = já feito; a etapa em destaque é a próxima. Etapas com “opcional” só se aplicam a alguns projetos.</p>
+
+<div class="fluxograma">
+  {% for f in fases %}
+  <section class="fase {{ 'fase-completa' if f.completa }}">
+    <header class="fase-topo">
+      <span class="fase-num">{{ f.num }}</span>
+      <div><h2>{{ f.nome }}</h2><p class="pequeno mudo">{{ f.resumo }}</p></div>
+      <span class="fase-prog">{{ f.feitas }}/{{ f.total }}</span>
+    </header>
+    <ol class="fase-etapas">
+      {% for e in f.etapas %}
+      <li class="etapa {{ 'feita' if e.feito }}{{ ' proxima' if e.proximo }}">
+        <a href="{{ e.link }}">
+          <span class="etapa-marca">{{ '✓' if e.feito else loop.index }}</span>
+          <span class="etapa-corpo">
+            <strong>{{ e.titulo }}</strong>{% if e.opcional %} <span class="selo">opcional</span>{% endif %}{% if e.proximo %} <span class="selo selo-apoiador">próximo</span>{% endif %}
+            <span class="etapa-simples">{{ e.simples }}</span>
+            <span class="etapa-dominio">Domínio PMBOK: {{ e.dominio }}</span>
+          </span>
+        </a>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+  {% if not loop.last %}<div class="seta-fase" aria-hidden="true">▼</div>{% endif %}
+  {% endfor %}
+</div>
+
+<section class="cartao dica">
+  <strong>Dica para quem está começando:</strong> o projeto não é uma linha reta. Em projetos ágeis você volta às fases 2, 3 e 4 a cada iteração
+  (planeja um pouco, faz, confere, ajusta). Use o <a href="{{ url_for('glossario', projeto_id=projeto.id) }}">glossário</a> sempre que encontrar um termo novo.
+</section>
+{% endblock %}

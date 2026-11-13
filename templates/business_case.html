@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Business case — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Business case e valor</h1>
+<p class="sub">Princípio 4 (foco no valor) e seção 2.6. O business case explica por que o projeto vale o investimento.
+  O valor deve ser reavaliado durante todo o projeto: se o investimento deixar de se justificar, a decisão certa pode ser mudar o rumo ou encerrar.</p>
+
+{% if fin %}
+<div class="resumo-linha">
+  <div class="metrica"><span class="metrica-rotulo">VPL</span>
+    <span class="metrica-valor {{ 'texto-alto' if not fin.viavel }}">{{ fin.vpl|moeda }}</span>
+    <span class="mudo pequeno">taxa {{ '%.1f'|format(fin.taxa)|replace('.', ',') }}% a.a. · {{ 'viável' if fin.viavel else 'não se paga' }}</span></div>
+  <div class="metrica"><span class="metrica-rotulo">ROI</span>
+    <span class="metrica-valor">{{ '%.0f'|format(fin.roi * 100) }}%</span>
+    <span class="mudo pequeno">em {{ projeto.bc_horizonte_anos }} ano{{ 's' if projeto.bc_horizonte_anos > 1 }}, sem desconto</span></div>
+  <div class="metrica"><span class="metrica-rotulo">Payback simples</span>
+    <span class="metrica-valor">{% if fin.payback %}{{ '%.1f'|format(fin.payback)|replace('.', ',') }} anos{% else %}—{% endif %}</span>
+    <span class="mudo pequeno">fluxo de {{ fin.fluxo|moeda }}/ano</span></div>
+  {% if previsto %}
+  <div class="metrica"><span class="metrica-rotulo">Custo previsto</span>
+    <span class="metrica-valor {{ 'texto-alto' if projeto.bc_investimento and previsto > projeto.bc_investimento }}">{{ previsto|moeda }}</span>
+    <span class="mudo pequeno">{{ base_previsto }}</span></div>
+  {% endif %}
+</div>
+<section class="cartao">
+  <h2>Valor presente acumulado</h2>
+  <p class="mudo">O ponto em que a linha cruza o zero é quando o investimento foi recuperado, já considerando o valor do dinheiro no tempo.</p>
+  {{ m.grafico(grafico) }}
+</section>
+{% else %}
+<div class="cartao dica">Preencha investimento, benefício anual e horizonte para o app calcular VPL, ROI e payback.
+  Se o valor do projeto não for financeiro (conformidade, segurança, imagem), descreva os benefícios não financeiros.</div>
+{% endif %}
+
+<form method="post" class="cartao formulario">
+  <h2>Justificativa</h2>
+  <label>Necessidade de negócio (o problema ou a oportunidade)
+    <textarea name="bc_necessidade" rows="2">{{ projeto.bc_necessidade }}</textarea></label>
+  <label>Justificativa do projeto (por que agora, o custo de não fazer)
+    <textarea name="bc_justificativa" rows="2">{{ projeto.bc_justificativa }}</textarea></label>
+  <label>Alinhamento com a estratégia da organização
+    <textarea name="bc_estrategia" rows="2">{{ projeto.bc_estrategia }}</textarea></label>
+  <label>Alternativas consideradas (inclusive não fazer nada)
+    <textarea name="bc_alternativas" rows="2">{{ projeto.bc_alternativas }}</textarea></label>
+  <label>Benefícios não financeiros
+    <textarea name="bc_beneficios_nao_financeiros" rows="2">{{ projeto.bc_beneficios_nao_financeiros }}</textarea></label>
+
+  <h2>Análise financeira</h2>
+  <div class="grade-3">
+    <label>Investimento total (R$)<input name="bc_investimento" inputmode="decimal" value="{{ m.num(projeto.bc_investimento) }}"></label>
+    <label>Benefício por ano (R$)<input name="bc_beneficio_anual" inputmode="decimal" value="{{ m.num(projeto.bc_beneficio_anual) }}"></label>
+    <label>Custo de operação por ano (R$)<input name="bc_custo_anual" inputmode="decimal" value="{{ m.num(projeto.bc_custo_anual) }}"></label>
+  </div>
+  <div class="grade-3">
+    <label>Horizonte (anos)<input name="bc_horizonte_anos" type="number" min="1" max="50" value="{{ projeto.bc_horizonte_anos or '' }}"></label>
+    <label>Taxa de desconto (% ao ano)<input name="bc_taxa" inputmode="decimal" value="{{ ('%g'|format(projeto.bc_taxa))|replace('.', ',') if projeto.bc_taxa is not none }}"></label>
+    <div class="mudo pequeno alinhar-base">{% if projeto.bc_revisado_em %}Revisado em {{ projeto.bc_revisado_em|data_br }}.{% else %}Ainda não revisado.{% endif %}
+      Salvar marca a revisão de hoje.</div>
+  </div>
+  <div class="acoes"><button class="botao" type="submit">Salvar e marcar como revisado</button></div>
+</form>
+
+<section class="cartao">
+  <h2>Benefícios esperados</h2>
+  {% if beneficios %}
+  <div class="tabela-rolagem"><table class="tabela">
+    <thead><tr><th>Benefício</th><th>Medida</th><th>Meta</th><th>Previsto</th><th>Status</th></tr></thead>
+    <tbody>{% for b in beneficios %}<tr><td>{{ b.descricao }}</td><td>{{ b.medida }}</td><td>{{ b.meta }}</td><td>{{ b.data_prevista|data_br }}</td>
+      <td>{{ dict(pmbok.STATUS_BENEFICIO)[b.status] }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="mudo">Nenhum benefício registrado.</p>{% endif %}
+  <p><a href="{{ url_for('entrega.beneficios', projeto_id=projeto.id) }}">Gerenciar benefícios →</a></p>
+</section>
+{% endblock %}

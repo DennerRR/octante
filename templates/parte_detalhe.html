@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m14 with context %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}{{ s.nome }} — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<div class="cabecalho">
+  <div>
+    <h1>{{ s.nome }} {% if not s.ativa %}<span class="selo">inativa</span>{% endif %}</h1>
+{{ m14.completude_barra(completude('parte', s)) }}
+    <p class="sub">{{ s.papel or 'Papel não informado' }}{% if s.organizacao %} · {{ s.organizacao }}{% endif %}
+      · {{ 'Interna' if s.interna else 'Externa' }}{% if s.categoria %} · {{ s.categoria }}{% endif %}{% if s.contato %} · {{ s.contato }}{% endif %}</p>
+  </div>
+  <a class="botao" href="{{ url_for('parte_editar', projeto_id=projeto.id, parte_id=s.id) }}">Editar</a>
+</div>
+
+<div class="cartoes">
+  <section class="cartao">
+    <h3><span class="etapa-num">2</span> Análise</h3>
+    <dl class="dados">
+      <dt>Poder</dt><dd>{{ s.poder or '—' }}</dd>
+      <dt>Interesse</dt><dd>{{ s.interesse or '—' }}</dd>
+      <dt>Influência</dt><dd>{{ s.influencia or '—' }}</dd>
+      <dt>Impacto</dt><dd>{{ s.impacto or '—' }}</dd>
+      <dt>Atitude</dt><dd>{{ m.selo_atitude(s.atitude) }}</dd>
+      <dt>Proximidade</dt><dd>{{ dict(pmbok.PROXIMIDADE).get(s.proximidade, '—') }}</dd>
+      <dt>Saliência</dt><dd><span class="selo selo-sal-{{ s.salience_classe }}">{{ s.salience }}</span></dd>
+    </dl>
+    {% if s.crencas %}<p><strong>Crenças e valores:</strong> {{ s.crencas }}</p>{% endif %}
+    {% if s.expectativas %}<p><strong>Expectativas:</strong> {{ s.expectativas }}</p>{% endif %}
+  </section>
+
+  <section class="cartao">
+    <h3><span class="etapa-num">3</span> Prioridade</h3>
+    <p>{{ m.selo_quadrante(s.quadrante) }}</p>
+    <p>{% if s.prioridade_manual %}Posição <strong>{{ s.prioridade_manual }}</strong> na priorização confirmada.{% else %}<span class="mudo">Priorização ainda não confirmada.</span>{% endif %}</p>
+    <a href="{{ url_for('partes_priorizacao', projeto_id=projeto.id) }}">Ver priorização →</a>
+  </section>
+
+  <section class="cartao">
+    <h3><span class="etapa-num">4</span> Engajamento</h3>
+    <dl class="dados">
+      <dt>Atual</dt><dd>{{ s.engajamento_atual|nivel }}</dd>
+      <dt>Desejado</dt><dd>{{ s.engajamento_desejado|nivel }}</dd>
+      <dt>Método</dt><dd>{{ pmbok.METODOS_COMUNICACAO_CURTO.get(s.metodo_comunicacao, '—') }}</dd>
+      <dt>Tipo</dt><dd>{{ pmbok.TIPOS_COMUNICACAO_CURTO.get(s.tipo_comunicacao, '—') }}</dd>
+      <dt>Frequência</dt><dd>{{ s.frequencia or '—' }}</dd>
+    </dl>
+    {% if s.estrategia %}<p><strong>Estratégia:</strong> {{ s.estrategia }}</p>{% endif %}
+  </section>
+</div>
+
+<section class="cartao">
+  <h2><span class="etapa-num">5</span> Monitorar: interações</h2>
+  <form method="post" action="{{ url_for('partes_monitoramento', projeto_id=projeto.id) }}" class="formulario form-interacao">
+    <input type="hidden" name="parte_id" value="{{ s.id }}">
+    <input type="hidden" name="voltar" value="detalhe">
+    {% include '_form_interacao.html' %}
+  </form>
+
+  {% if interacoes %}
+  <div class="tabela-rolagem">
+  <table class="tabela">
+    <thead><tr><th>Data</th><th>Método</th><th>Tipo</th><th>Resumo</th><th>Feedback</th><th>Satisfação</th><th></th></tr></thead>
+    <tbody>
+    {% for i in interacoes %}
+      <tr>
+        <td>{{ i.data|data_br }}</td>
+        <td>{{ pmbok.METODOS_COMUNICACAO_CURTO.get(i.metodo, '—') }}</td>
+        <td>{{ pmbok.TIPOS_COMUNICACAO_CURTO.get(i.tipo, '—') }}</td>
+        <td>{{ i.resumo }}</td>
+        <td>{{ i.feedback }}</td>
+        <td>{{ i.satisfacao ~ '/5' if i.satisfacao else '—' }}</td>
+        <td><form method="post" action="{{ url_for('interacao_excluir', projeto_id=projeto.id, interacao_id=i.id) }}">
+          <input type="hidden" name="voltar" value="detalhe"><button class="link-perigo" type="submit" title="Remover">✕</button></form></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="mudo">Nenhuma interação registrada.</p>
+  {% endif %}
+
+  {% if historico %}
+  <h3>Histórico do nível de engajamento</h3>
+  <ul class="historico">
+    {% for h in historico %}
+    <li>{{ h.data|data_br }}: {% if h.nivel_anterior %}{{ h.nivel_anterior|nivel }} → {% endif %}<strong>{{ h.nivel_novo|nivel }}</strong></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
+
+<section class="cartao">
+  <div class="titulo-secao">
+    <h2>Riscos relacionados</h2>
+    <a class="botao botao-sec" href="{{ url_for('incerteza.risco_novo', projeto_id=projeto.id, parte=s.id) }}">+ Registrar risco relacionado</a>
+  </div>
+  <p class="mudo pequeno">Partes interessadas podem aumentar ou reduzir a incerteza do projeto (seção 2.1.2). Registre aqui ameaças e oportunidades ligadas a {{ s.nome }}.</p>
+  {% if riscos %}
+  <ul class="historico">
+    {% for r in riscos %}
+    <li><a href="{{ url_for('incerteza.risco_detalhe', projeto_id=projeto.id, risco_id=r.id) }}"><strong>{{ r.rotulo }}</strong> {{ r.titulo }}</a>
+      · {{ dict(pmbok.TIPOS_RISCO)[r.tipo] }} · {{ dict(pmbok.STATUS_RISCO)[r.status] }}
+      {% if r.nivel %}<span class="selo selo-nivel-{{ r.nivel }}">{{ r.pontuacao }}</span>{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
+
+<form method="post" action="{{ url_for('parte_excluir', projeto_id=projeto.id, parte_id=s.id) }}" class="cartao perigo">
+  <p>Para quem deixou de ser parte interessada, prefira desmarcar “Ativa” na edição e manter o histórico.
+     Excluir remove também as interações.</p>
+  <button class="botao botao-perigo" type="submit">Excluir do registro</button>
+</form>
+{% endblock %}

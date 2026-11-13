@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block titulo %}Dados e backups — Octante{% endblock %}
+{% block conteudo %}
+<h1>Dados e backups</h1>
+<p class="sub">Só administradores veem esta página. O app faz um backup automático por dia, outro antes de cada atualização e outro antes de cada restauração. Toda cópia é conferida (integridade e assinatura SHA-256).</p>
+
+<section class="cartao">
+  <div class="titulo-secao"><h2>Lixeira: projetos excluídos</h2></div>
+  {% if projetos_excluidos %}
+  <table><thead><tr><th>Projeto</th><th>Excluído por</th><th>Quando</th><th>Registros</th><th></th></tr></thead><tbody>
+  {% for e in projetos_excluidos %}
+    <tr><td>{{ e.registro }}</td><td>{{ e.quem }}</td><td>{{ e.quando[:16] }}</td><td>{{ e.n }}</td>
+      <td><form method="post"><input type="hidden" name="acao" value="restaurar_lote"><input type="hidden" name="lote" value="{{ e.lote }}">
+        <button class="botao botao-sec" type="submit">Restaurar projeto</button></form></td></tr>
+  {% endfor %}</tbody></table>
+  {% else %}<p class="mudo">Nenhum projeto excluído.</p>{% endif %}
+</section>
+
+<section class="cartao">
+  <h2>Lixeira: outros registros excluídos</h2>
+  {% if registros_excluidos %}
+  <table><thead><tr><th>Tipo</th><th>Registro</th><th>Excluído por</th><th>Quando</th><th></th></tr></thead><tbody>
+  {% for e in registros_excluidos %}
+    <tr><td>{{ e.tipo }}</td><td>{{ e.registro }}</td><td>{{ e.quem }}</td><td>{{ e.quando[:16] }}</td>
+      <td><form method="post"><input type="hidden" name="acao" value="restaurar_lote"><input type="hidden" name="lote" value="{{ e.lote }}">
+        <button class="botao botao-sec" type="submit">Restaurar</button></form></td></tr>
+  {% endfor %}</tbody></table>
+  {% else %}<p class="mudo">Nenhum registro excluído.</p>{% endif %}
+</section>
+
+<section class="cartao">
+  <div class="titulo-secao"><h2>Backups</h2>
+    <form method="post"><input type="hidden" name="acao" value="backup_agora"><button class="botao" type="submit">Fazer backup agora</button></form></div>
+  <table><thead><tr><th>Quando</th><th>Motivo</th><th>Tamanho</th><th>Assinatura</th><th></th></tr></thead><tbody>
+  {% for b in backups %}
+    <tr><td>{{ b.quando.strftime('%d/%m/%Y %H:%M') }}</td><td>{{ b.motivo }}</td><td>{{ b.tamanho_kb }} KB</td>
+      <td>{{ '✓ SHA-256' if b.assinado else '—' }}</td>
+      <td class="acoes-tabela"><a class="botao botao-sec" href="{{ url_for('dados.baixar_backup', nome=b.nome) }}">Baixar</a>
+        <form method="post"><input type="hidden" name="acao" value="restaurar_backup"><input type="hidden" name="nome" value="{{ b.nome }}">
+        <button class="botao botao-perigo" type="submit" data-confirmar="O banco atual será substituído por este backup (uma cópia do estado atual será guardada antes).">Restaurar</button></form></td></tr>
+  {% else %}<tr><td colspan="5" class="mudo">Nenhum backup ainda.</td></tr>{% endfor %}
+  </tbody></table>
+  <h3>Restaurar a partir de um arquivo</h3>
+  <form method="post" enctype="multipart/form-data" class="linha-form">
+    <input type="hidden" name="acao" value="enviar_backup">
+    <input type="file" name="arquivo" accept=".db" required aria-label="Arquivo de backup">
+    <button class="botao botao-perigo" type="submit" data-confirmar="O banco atual será substituído pelo arquivo enviado (uma cópia do estado atual será guardada antes).">Enviar e restaurar</button>
+  </form>
+  <p class="pequeno mudo">Guarde backups baixados em local seguro: eles contêm todos os dados, inclusive os contatos das partes interessadas.</p>
+</section>
+{% endblock %}

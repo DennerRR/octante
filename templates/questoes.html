@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m14 with context %}
+{% block titulo %}Questões — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<div class="cabecalho">
+  <div>
+    <h1>Registro de questões</h1>
+<p class="exportar-linha">{{ m14.exportar(projeto, 'questoes') }}</p>
+    <p class="sub">Artefato da seção 4.6.2. Uma questão é uma condição atual que pode afetar os objetivos do projeto, ao contrário do risco,
+      que ainda pode acontecer. Cada questão tem um responsável pelo acompanhamento e pela resolução.</p>
+  </div>
+  <a class="botao" href="{{ url_for('trabalho.questao_nova', projeto_id=projeto.id) }}">+ Registrar questão</a>
+</div>
+
+<form class="filtros" method="get">
+  <select name="status" data-enviar-ao-mudar aria-label="Status">
+    <option value="abertas" {{ 'selected' if filtro == 'abertas' }}>Abertas e em andamento</option>
+    <option value="todas" {{ 'selected' if filtro == 'todas' }}>Todas</option>
+    {% for k, v in pmbok.STATUS_QUESTAO %}<option value="{{ k }}" {{ 'selected' if filtro == k }}>{{ v }}</option>{% endfor %}
+  </select>
+  <noscript><button class="botao botao-sec" type="submit">Filtrar</button></noscript>
+</form>
+
+{% if questoes %}
+<section class="cartao">
+  <div class="tabela-rolagem">
+  <table class="tabela">
+    <thead><tr><th>Código</th><th>Questão</th><th>Prioridade</th><th>Responsável</th><th>Prazo</th><th>Status</th><th>Aberta há</th><th>Origem</th></tr></thead>
+    <tbody>
+    {% for q in questoes %}
+      <tr class="{{ 'inativa' if not q.aberta }}">
+        <td><a href="{{ url_for('trabalho.questao', projeto_id=projeto.id, questao_id=q.id) }}"><strong>{{ q.rotulo }}</strong></a></td>
+        <td><a href="{{ url_for('trabalho.questao', projeto_id=projeto.id, questao_id=q.id) }}">{{ q.titulo }}</a></td>
+        <td><span class="selo selo-prio-{{ q.prioridade }}">{{ dict(pmbok.PRIORIDADES)[q.prioridade] }}</span></td>
+        <td>{{ q.responsavel or q.parte_nome or '—' }}</td>
+        <td>{{ q.prazo|data_br or '—' }}{% if q.atrasada %} <span class="selo selo-opositor">atrasada</span>{% endif %}</td>
+        <td>{{ dict(pmbok.STATUS_QUESTAO)[q.status] }}</td>
+        <td>{% if q.aberta %}{{ 'hoje' if q.dias_aberta == 0 else q.dias_aberta ~ ' dia' ~ ('s' if q.dias_aberta != 1 else '') }}{% else %}<span class="mudo pequeno">resolvida em {{ q.dias_aberta }} dia{{ 's' if q.dias_aberta != 1 }}</span>{% endif %}</td>
+        <td>{% if q.risco_codigo %}<a href="{{ url_for('incerteza.risco_detalhe', projeto_id=projeto.id, risco_id=q.risco_id) }}">R-{{ q.risco_codigo }}</a>{% else %}<span class="mudo">—</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% elif total %}
+<div class="vazio"><p>Nenhuma questão com esse filtro.</p></div>
+{% else %}
+<div class="vazio">
+  <h2>Nenhuma questão registrada</h2>
+  <p>Registre impedimentos, problemas e situações que já estão afetando o projeto. Riscos que ocorrem viram questões automaticamente.</p>
+  <a class="botao" href="{{ url_for('trabalho.questao_nova', projeto_id=projeto.id) }}">Registrar a primeira</a>
+</div>
+{% endif %}
+{% endblock %}

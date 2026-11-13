@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block titulo %}Busca — Octante{% endblock %}
+{% block conteudo %}
+<h1>Busca</h1>
+<form method="get" class="linha-form" role="search"><input name="q" value="{{ q }}" placeholder="Ex.: WhatsApp, Lúcia, integração…" aria-label="Buscar" autofocus>
+  <button class="botao" type="submit">Buscar</button></form>
+<section class="cartao" style="margin-top:1rem">
+{% if q|length < 2 %}<p class="mudo">Digite pelo menos 2 letras. Dica: pressione <kbd>/</kbd> em qualquer tela para buscar.</p>
+{% elif resultados %}
+  <p class="pequeno mudo">{{ resultados|length }} resultado(s) para “{{ q }}”.</p>
+  <ul class="lista-simples">{% for r in resultados %}<li><span class="selo">{{ r.tipo }}</span> <a href="{{ r.link }}">{{ r.titulo }}</a> {% if r.projeto %}<span class="pequeno mudo">· {{ r.projeto }}</span>{% endif %}</li>{% endfor %}</ul>
+{% else %}<p class="mudo">Nada encontrado para “{{ q }}”.</p>{% endif %}
+</section>
+{% endblock %}

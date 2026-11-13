@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block conteudo %}
+{% set dados = request.form if request.method == 'POST' else (p if p else {}) %}
+<h1>{{ 'Novo projeto' if novo else 'Editar projeto' }}</h1>
+<form method="post" class="cartao formulario">
+  <label>Nome do projeto *
+    <input name="nome" required value="{{ dados.nome or '' }}" placeholder="Ex.: App de agendamento da clínica">
+  </label>
+  <label>Descrição
+    <textarea name="descricao" rows="3" placeholder="O que será entregue e para quem">{{ dados.descricao or '' }}</textarea>
+  </label>
+  <label><span>Cadência de entrega <span class="mudo">(seção 2.3.2, pode definir depois)</span></span>
+    {{ m.opcoes('cadencia', pmbok.CADENCIAS, dados.cadencia, vazio='— definir depois —') }}
+  </label>
+  {% if novo and modelos %}
+  <fieldset>
+    <legend>Começar a partir de um modelo</legend>
+    <p class="pequeno mudo">O modelo já preenche a abordagem, as fases, a definição de pronto e riscos típicos. Tudo pode ser mudado depois.</p>
+    {% for chave, md in modelos.items() %}
+    <label class="check"><input type="radio" name="modelo" value="{{ chave }}" {{ 'checked' if (dados.modelo or '') == chave }}>
+      <span><strong>{{ md.nome }}</strong> <span class="mudo">— {{ md.descricao }}</span></span></label>
+    {% endfor %}
+  </fieldset>
+  {% endif %}
+  {% if not novo and usuarios is defined and login_ativo and usuario_atual and usuario_atual.admin %}
+  <fieldset>
+    <legend>Quem tem acesso a este projeto</legend>
+    <input type="hidden" name="acesso_enviado" value="1">
+    <p class="pequeno mudo">Administradores veem todos os projetos. Marque os demais usuários que podem ver e editar este.</p>
+    {% for u in usuarios %}<label class="check"><input type="checkbox" name="acesso" value="{{ u.id }}" {{ 'checked' if u.tem }}> {{ u.nome }} <span class="mudo">({{ u.login }})</span></label>
+    {% else %}<p class="mudo pequeno">Nenhum usuário além dos administradores. Cadastre em “Usuários”.</p>{% endfor %}
+  </fieldset>
+  {% endif %}
+  <div class="acoes">
+    <button class="botao" type="submit">{{ 'Criar projeto' if novo else 'Salvar' }}</button>
+    <a class="botao botao-sec" href="{{ url_for('projeto', projeto_id=p.id) if p else url_for('inicio') }}">Cancelar</a>
+  </div>
+</form>
+
+{% if not novo %}
+<form method="post" action="{{ url_for('projeto_excluir', projeto_id=p.id) }}" class="cartao perigo">
+  <h3>Excluir projeto</h3>
+  <p>Remove o projeto e todos os seus registros. Um administrador pode restaurá-lo depois em Dados → Lixeira.</p>
+  <label class="check"><input type="checkbox" name="confirmar" value="sim"> Confirmo que quero excluir “{{ p.nome }}”</label>
+  <button class="botao botao-perigo" type="submit">Excluir</button>
+</form>
+{% endif %}
+{% endblock %}

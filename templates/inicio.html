@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+<div class="cabecalho">
+  <div>
+    <h1>Projetos</h1>
+    <p class="sub">O Octante ajuda você a gerenciar projetos aplicando na prática os 8 domínios de desempenho, os 12 princípios e os métodos do PMBOK® Guide 7ª edição.</p>
+  </div>
+  <a class="botao" href="{{ url_for('projeto_novo') }}">+ Novo projeto</a>
+</div>
+
+{% if projetos %}
+<div class="cartoes">
+  {% for p in projetos %}
+  <a class="cartao cartao-link" href="{{ url_for('projeto', projeto_id=p.id) }}">
+    <h3>{{ p.nome }}</h3>
+    <p class="mudo">{{ p.descricao|truncate(120) if p.descricao else 'Sem descrição' }}</p>
+    <div class="cartao-rodape">
+      <span class="selo">{{ dict(pmbok.ABORDAGENS).get(p.abordagem, 'Abordagem não definida') }}</span>
+      {% if p.situacao != 'ativo' %}<span class="selo selo-{{ 'neutro' if p.situacao == 'encerrado' else 'opositor' }}">{{ dict(pmbok.SITUACOES_PROJETO)[p.situacao] }}</span>{% endif %}
+      <span class="mudo">{{ p.n_partes }} partes interessadas · atualizado {{ p.atualizado_em|data_br }}</span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="vazio">
+  <img class="logo-entrada" src="{{ url_for('static', filename='marca/octante-logo.svg') }}" alt="Octante: gestão de projetos">
+  <h2>Bem-vindo! Nenhum projeto ainda</h2>
+  <p>Primeira vez aqui? Abra o <strong>projeto de exemplo</strong> para ver como cada tela fica preenchida.
+     Quando estiver pronto, crie o seu: o app mostra um fluxo de 5 fases e diz qual é o próximo passo.</p>
+  <div class="acoes-centro">
+    <form method="post" action="{{ url_for('criar_exemplo') }}"><button class="botao botao-sec" type="submit">Ver projeto de exemplo</button></form>
+    <a class="botao" href="{{ url_for('projeto_novo') }}">Criar o primeiro projeto</a>
+  </div>
+</div>
+{% endif %}
+
+<section class="cartao dica">
+  <h3>Como o app segue o PMBOK 7</h3>
+  <p>O PMBOK 7 organiza o gerenciamento em <strong>8 domínios de desempenho</strong> (áreas que acontecem ao mesmo tempo)
+     e <strong>12 princípios</strong> (comportamentos esperados). Para quem está começando, o app organiza esse trabalho num
+     <strong>fluxo de 5 fases</strong>: Iniciar, Planejar, Executar, Acompanhar e Encerrar. Cada etapa diz a qual domínio pertence.
+     Em projetos ágeis as fases 2 a 4 se repetem a cada iteração.</p>
+</section>
+{% if not login_ativo or (usuario_atual and usuario_atual.admin) %}
+<p class="rodape-inicio mudo pequeno">Guarde uma cópia dos dados de vez em quando:
+  <a href="{{ url_for('backup') }}">baixar backup</a>.</p>
+{% endif %}
+{% endblock %}

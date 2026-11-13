@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block titulo %}Portfólio — Octante{% endblock %}
+{% block conteudo %}
+<div class="cabecalho">
+  <div><h1>Portfólio de projetos</h1>
+  <p class="sub">Todos os projetos que você acompanha, dos mais críticos para os mais tranquilos. Clique no nome para abrir.</p></div>
+  {% if usuario_atual and usuario_atual.admin or not login_ativo %}
+  <form method="post" action="{{ url_for('pmo.definir_exigencia') }}" class="linha-form" title="Quantos campos são obrigatórios nos registros">
+    <label class="pequeno">Nível de exigência
+      <select name="nivel" data-enviar-ao-mudar><option value="essencial" {{ 'selected' if nivel == 'essencial' }}>Essencial</option>
+        <option value="rigoroso" {{ 'selected' if nivel == 'rigoroso' }}>Rigoroso</option></select></label>
+  </form>
+  {% endif %}
+</div>
+<section class="cartao">
+{% if linhas %}
+<table>
+  <thead><tr><th>Projeto</th><th>Abordagem</th><th>Prazo · Custo · Escopo · Riscos · Partes · Questões</th><th>Fase / próximo passo</th><th>Revisões</th><th>Atualizado</th></tr></thead>
+  <tbody>
+  {% for l in linhas %}
+    <tr>
+      <td><a href="{{ url_for('projeto', projeto_id=l.p.id) }}"><strong>{{ l.p.nome }}</strong></a>
+        {% if l.p.situacao != 'ativo' %}<span class="selo">{{ l.p.situacao }}</span>{% endif %}</td>
+      <td>{{ dict(pmbok.ABORDAGENS).get(l.p.abordagem, '—') }}</td>
+      <td><span class="pontos-semaforo">{% for s in l.sem %}<span class="ponto ponto-{{ s.status }}" title="{{ s.dimensao }}: {{ s.rotulo }} — {{ s.texto }}" role="img" aria-label="{{ s.dimensao }}: {{ s.rotulo }}"></span>{% endfor %}</span>
+        <span class="pequeno mudo">{% if l.criticos %}{{ l.criticos }} crítico(s){% elif l.atencao %}{{ l.atencao }} em atenção{% else %}no rumo{% endif %}</span></td>
+      <td class="pequeno">{% if l.etapa %}{{ l.fase.num }}. {{ l.fase.nome }} → <a href="{{ l.etapa.link }}">{{ l.etapa.titulo }}</a>{% else %}<span class="mudo">Etapas obrigatórias feitas</span>{% endif %}</td>
+      <td>{% if l.pendentes %}<span class="selo selo-q1">{{ l.pendentes }} pendente(s)</span>{% else %}<span class="mudo">—</span>{% endif %}</td>
+      <td class="pequeno mudo">{{ l.p.atualizado_em|data_br }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<p class="pequeno mudo">Bolinhas: verde = no rumo, âmbar = atenção, vermelho = crítico, cinza = sem dados. Passe o mouse para ver o detalhe.</p>
+{% else %}<p class="mudo">Nenhum projeto visível para você. Peça a um administrador para incluí-lo em um projeto.</p>{% endif %}
+</section>
+{% endblock %}

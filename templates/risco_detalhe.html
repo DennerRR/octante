@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m14 with context %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}{{ r.rotulo }} — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<p><a href="{{ url_for('incerteza.riscos', projeto_id=projeto.id) }}">← Registro de riscos</a></p>
+<div class="cabecalho">
+  <div>
+    <h1>{{ r.rotulo }} · {{ r.titulo }}</h1>
+{{ m14.completude_barra(completude('risco', r)) }}
+    <p class="sub">
+      <span class="selo selo-tipo-{{ r.tipo }}">{{ dict(pmbok.TIPOS_RISCO)[r.tipo] }}</span>
+      {{ dict(pmbok.STATUS_RISCO)[r.status] }}
+      {% if r.fonte %} · fonte {{ dict(pmbok.FONTES_RISCO)[r.fonte]|lower }}{% endif %}
+      · identificado em {{ r.identificado_em|data_br }}
+    </p>
+  </div>
+  <a class="botao" href="{{ url_for('incerteza.risco_editar', projeto_id=projeto.id, risco_id=r.id) }}">Editar</a>
+</div>
+
+<div class="cartoes">
+  <section class="cartao">
+    <h3>Avaliação</h3>
+    {% if r.nivel %}
+    <p class="pontuacao pontuacao-{{ r.nivel }}">{{ r.pontuacao }} <span>{{ pmbok.NIVEIS_RISCO_NOME[r.nivel] }}</span></p>
+    {% endif %}
+    <dl class="dados">
+      <dt>Probabilidade</dt><dd>{{ r.probabilidade or '—' }}</dd>
+      <dt>Impacto</dt><dd>{{ r.impacto or '—' }}</dd>
+      <dt>Impacto em custo</dt><dd>{{ r.impacto_custo|moeda }}</dd>
+      <dt>Impacto em prazo</dt><dd>{{ (r.impacto_prazo_dias ~ ' dias') if r.impacto_prazo_dias is not none else '—' }}</dd>
+      <dt>EMV</dt><dd>{{ r.emv|moeda }}</dd>
+    </dl>
+    {% if pontos|length > 1 %}<p class="mudo pequeno">Evolução da pontuação {{ m.sparkline_pontuacao(pontos) }}</p>{% endif %}
+  </section>
+  <section class="cartao">
+    <h3>Resposta</h3>
+    <dl class="dados">
+      <dt>Estratégia</dt><dd>{{ r.estrategia_nome or '—' }}</dd>
+      <dt>Responsável</dt><dd>{{ r.responsavel or '—' }}</dd>
+      <dt>Parte relacionada</dt><dd>{% if r.parte_id %}<a href="{{ url_for('parte_detalhe', projeto_id=projeto.id, parte_id=r.parte_id) }}">{{ r.parte_nome }}</a>{% else %}—{% endif %}</dd>
+      <dt>Reserva</dt><dd>{{ r.reserva_custo|moeda }}{% if r.reserva_prazo_dias %} · {{ r.reserva_prazo_dias }} dias{% endif %}</dd>
+    </dl>
+  </section>
+  <section class="cartao">
+    <h3>Descrição</h3>
+    {% if r.causa %}<p><strong>Causa:</strong> {{ r.causa }}</p>{% endif %}
+    {% if r.efeito %}<p><strong>Efeito:</strong> {{ r.efeito }}</p>{% endif %}
+    {% if r.gatilho %}<p><strong>Gatilho:</strong> {{ r.gatilho }}</p>{% endif %}
+    {% if not (r.causa or r.efeito or r.gatilho) %}<p class="mudo">Sem causa, efeito ou gatilho descritos.</p>{% endif %}
+  </section>
+</div>
+
+{% if questoes %}
+<section class="cartao destaque">
+  <h3>Tratamento após ocorrer</h3>
+  <ul class="historico">
+    {% for q in questoes %}
+    <li><a href="{{ url_for('trabalho.questao', projeto_id=projeto.id, questao_id=q.id) }}"><strong>Q-{{ q.codigo }}</strong> {{ q.titulo }}</a>
+      · {{ dict(pmbok.STATUS_QUESTAO)[q.status] }}{% if q.reserva_usada_custo %} · reserva usada {{ q.reserva_usada_custo|moeda }}{% endif %}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if r.plano_resposta or r.plano_contingencia or r.riscos_secundarios %}
+<section class="cartao">
+  {% if r.plano_resposta %}<p><strong>Plano de resposta:</strong> {{ r.plano_resposta }}</p>{% endif %}
+  {% if r.plano_contingencia %}<p><strong>Plano de contingência:</strong> {{ r.plano_contingencia }}</p>{% endif %}
+  {% if r.riscos_secundarios %}<p><strong>Riscos secundários e residuais:</strong> {{ r.riscos_secundarios }}</p>{% endif %}
+</section>
+{% endif %}
+
+{% if r.ativo or itens %}
+<section class="cartao">
+  <div class="titulo-secao"><h2>Respostas no backlog</h2>
+    <a class="botao botao-sec" href="{{ url_for('entrega.item_novo', projeto_id=projeto.id, risco=r.id) }}">+ Criar item de resposta</a></div>
+  <p class="mudo pequeno">Um backlog ajustado ao risco inclui o trabalho necessário para tratar ameaças e oportunidades (seção 4.6.2).</p>
+  {% if itens %}<ul class="historico">{% for x in itens %}<li><a href="{{ url_for('entrega.item', projeto_id=projeto.id, item_id=x.id) }}"><strong>I-{{ x.codigo }}</strong> {{ x.titulo }}</a> <span class="selo selo-item-{{ x.status }}">{{ dict(pmbok.STATUS_ITEM)[x.status] }}</span></li>{% endfor %}</ul>{% endif %}
+</section>
+{% endif %}
+
+<section class="cartao">
+  <h2>Revisão do risco <span class="fonte">seção 2.8.5.4</span></h2>
+  <p class="mudo">Reavalie com frequência: o nível de risco muda ao longo do projeto.
+    {% if r.revisao_atrasada %}<span class="selo selo-opositor">Revisão atrasada (cadência de {{ projeto.revisao_risco_dias }} dias)</span>{% endif %}</p>
+  <form method="post" action="{{ url_for('incerteza.risco_revisar', projeto_id=projeto.id, risco_id=r.id) }}" class="formulario">
+    <div class="grade-4">
+      <label>Probabilidade {{ m.escala('probabilidade', r.probabilidade) }}</label>
+      <label>Impacto {{ m.escala('impacto', r.impacto) }}</label>
+      <label>Status {{ m.opcoes('status', pmbok.STATUS_RISCO, r.status) }}</label>
+      <label>Nota<input name="nota" placeholder="Ex.: revisado na retrospectiva da sprint 3"></label>
+    </div>
+    <div class="acoes"><button class="botao" type="submit">Registrar revisão</button></div>
+  </form>
+  {% if revisoes %}
+  <div class="tabela-rolagem">
+  <table class="tabela">
+    <thead><tr><th>Data</th><th class="centro">P</th><th class="centro">I</th><th>Pontuação</th><th>Status</th><th>Nota</th></tr></thead>
+    <tbody>
+    {% for rv in revisoes %}
+      <tr><td>{{ rv.data|data_br }}</td><td class="centro">{{ rv.probabilidade or '—' }}</td><td class="centro">{{ rv.impacto or '—' }}</td>
+        <td>{{ (rv.probabilidade * rv.impacto) if rv.probabilidade and rv.impacto else '—' }}</td>
+        <td>{{ dict(pmbok.STATUS_RISCO).get(rv.status, '—') }}</td><td>{{ rv.nota }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% endif %}
+</section>
+
+<form method="post" action="{{ url_for('incerteza.risco_excluir', projeto_id=projeto.id, risco_id=r.id) }}" class="cartao perigo">
+  <p>Riscos que deixaram de existir devem ser <strong>encerrados</strong>, mantendo o histórico. Excluir remove o risco e suas revisões.</p>
+  <button class="botao botao-perigo" type="submit">Excluir risco</button>
+</form>
+{{ m14.pedir_revisao(projeto, 'risco', r.id, r.rotulo ~ ' ' ~ r.titulo) }}
+{% endblock %}

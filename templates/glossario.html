@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block titulo %}Glossário — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Glossário simples</h1>
+<p class="sub">Os termos mais usados no app, explicados sem jargão.</p>
+<section class="cartao">
+  <dl class="glossario">
+    {% for termo, def_ in termos %}<dt>{{ termo }}</dt><dd>{{ def_ }}</dd>{% endfor %}
+  </dl>
+</section>
+{% endblock %}

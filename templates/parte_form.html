@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}{{ 'Nova parte interessada' if novo else s.nome }} — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>{{ 'Identificar parte interessada' if novo else 'Editar ' ~ s.nome }}</h1>
+<p class="sub">Só o nome é obrigatório. As demais etapas podem ser preenchidas agora ou nas telas de análise, priorização e engajamento.</p>
+
+<form method="post" class="formulario">
+  <section class="cartao">
+    <h2><span class="etapa-num">1</span> Identificar</h2>
+    <div class="grade-2">
+      <label>Nome *<input name="nome" required value="{{ s.nome or '' }}" placeholder="Pessoa, grupo ou organização"></label>
+      <label>Papel / cargo<input name="papel" value="{{ s.papel or '' }}" placeholder="Ex.: Diretora clínica"></label>
+      <label>Organização / área<input name="organizacao" value="{{ s.organizacao or '' }}"></label>
+      <label>Categoria
+        <select name="categoria">
+          <option value="">—</option>
+          {% for c in pmbok.CATEGORIAS_PARTES %}<option {{ 'selected' if s.categoria == c }}>{{ c }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Interna ou externa à organização
+        <select name="interna">
+          <option value="1" {{ 'selected' if s.interna }}>Interna</option>
+          <option value="0" {{ 'selected' if not s.interna }}>Externa</option>
+        </select>
+      </label>
+      <label>Contato<input name="contato" value="{{ s.contato or '' }}" placeholder="E-mail, telefone, canal"></label>
+    </div>
+    <label class="check"><input type="checkbox" name="ativa" value="1" {{ 'checked' if s.ativa }}> Ativa no projeto (desmarque quando deixar de ser parte interessada)</label>
+  </section>
+
+  <section class="cartao">
+    <h2><span class="etapa-num">2</span> Compreender e analisar</h2>
+    <p class="mudo">Escala de 1 (muito baixo) a 5 (muito alto). A análise deve ficar restrita à equipe, pois pode ser mal interpretada fora de contexto.</p>
+    <div class="grade-4">
+      <label>Poder {{ m.escala('poder', s.poder) }}</label>
+      <label>Interesse {{ m.escala('interesse', s.interesse) }}</label>
+      <label>Influência {{ m.escala('influencia', s.influencia) }}</label>
+      <label>Impacto {{ m.escala('impacto', s.impacto) }}</label>
+    </div>
+    <div class="grade-2">
+      <label>Atitude em relação ao projeto {{ m.opcoes('atitude', pmbok.ATITUDES, s.atitude) }}</label>
+      <label>Proximidade do projeto {{ m.opcoes('proximidade', pmbok.PROXIMIDADE, s.proximidade, vazio='—') }}</label>
+    </div>
+    <label>Crenças, valores e sentimentos<textarea name="crencas" rows="2">{{ s.crencas or '' }}</textarea></label>
+    <label>Expectativas<textarea name="expectativas" rows="2">{{ s.expectativas or '' }}</textarea></label>
+    <fieldset>
+      <legend>Modelo de Saliência <span class="fonte">seção 4.2.7.5</span></legend>
+      <label class="check"><input type="checkbox" name="sal_poder" value="1" {{ 'checked' if s.sal_poder }}> Tem <strong>poder</strong> para influenciar</label>
+      <label class="check"><input type="checkbox" name="sal_legitimidade" value="1" {{ 'checked' if s.sal_legitimidade }}> Tem relação <strong>legítima</strong> com o projeto</label>
+      <label class="check"><input type="checkbox" name="sal_urgencia" value="1" {{ 'checked' if s.sal_urgencia }}> Suas demandas são <strong>urgentes</strong></label>
+    </fieldset>
+  </section>
+
+  <section class="cartao">
+    <h2><span class="etapa-num">4</span> Engajar</h2>
+    <p class="mudo">A priorização (etapa 3) é feita comparando todas as partes na tela de priorização.</p>
+    <div class="grade-2">
+      <label>Engajamento atual {{ m.niveis('engajamento_atual', s.engajamento_atual) }}</label>
+      <label>Engajamento desejado {{ m.niveis('engajamento_desejado', s.engajamento_desejado) }}</label>
+      <label>Método de comunicação {{ m.opcoes('metodo_comunicacao', pmbok.METODOS_COMUNICACAO, s.metodo_comunicacao, vazio='—') }}</label>
+      <label>Tipo de comunicação {{ m.opcoes('tipo_comunicacao', pmbok.TIPOS_COMUNICACAO, s.tipo_comunicacao, vazio='—') }}</label>
+      <label>Frequência
+        <select name="frequencia"><option value="">—</option>
+          {% for fq in pmbok.FREQUENCIAS %}<option {{ 'selected' if s.frequencia == fq }}>{{ fq }}</option>{% endfor %}
+        </select>
+      </label>
+    </div>
+    <label>Estratégia de engajamento<textarea name="estrategia" rows="2" placeholder="Como mover esta parte do nível atual para o desejado?">{{ s.estrategia or '' }}</textarea></label>
+  </section>
+
+  <div class="acoes barra-salvar">
+    <button class="botao" type="submit">{{ 'Adicionar' if novo else 'Salvar' }}</button>
+    {% if novo %}<button class="botao botao-sec" type="submit" name="acao" value="outra">Adicionar e identificar outra</button>{% endif %}
+    <a class="botao botao-sec" href="{{ url_for('partes_registro', projeto_id=projeto.id) if novo else url_for('parte_detalhe', projeto_id=projeto.id, parte_id=s.id) }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

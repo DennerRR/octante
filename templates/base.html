@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block titulo %}Octante{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='marca/octante-favicon.svg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<a class="pular" href="#conteudo">Pular para o conteúdo</a>
+<header class="topo">
+  <a class="marca" href="{{ url_for('inicio') }}"><img class="marca-simbolo" src="{{ url_for('static', filename='marca/octante-simbolo-negativo.svg') }}" alt="" width="30" height="30"><img class="marca-nome" src="{{ url_for('static', filename='marca/octante-nome-negativo.svg') }}" alt="Octante" height="20"></a>
+  {% if projeto %}<span class="topo-projeto" title="Projeto aberto: {{ projeto.nome }}"><span class="topo-projeto-rotulo">Projeto</span>{{ projeto.nome }}</span>{% endif %}
+  <form class="busca-topo" method="get" action="{{ url_for('pmo.busca') }}" role="search">
+    <input name="q" id="busca-global" placeholder="Buscar ( / )" aria-label="Buscar em todos os projetos"></form>
+  <nav class="topo-links">
+    <a href="{{ url_for('inicio') }}">Projetos</a>
+    <a href="{{ url_for('pmo.portfolio') }}">Portfólio</a>
+    {% if usuario_atual %}<a href="{{ url_for('pmo.pendencias') }}">Pendências</a>{% endif %}
+    <a href="{{ url_for('principios') }}">PMBOK 7</a>
+    {% if usuario_atual %}
+      {% if usuario_atual.admin %}<a href="{{ url_for('pmo.revisoes') }}">Revisões{% set n_rev = contar_revisoes() %}{% if n_rev %}<span class="contador">{{ n_rev }}</span>{% endif %}</a><a href="{{ url_for('auth.usuarios') }}">Usuários</a><a href="{{ url_for('dados.painel') }}">Dados</a>{% endif %}
+      <a href="{{ url_for('auth.minha_senha') }}" title="Trocar minha senha">{{ usuario_atual.nome.split()[0] }}</a>
+      <form method="post" action="{{ url_for('auth.sair') }}" class="form-sair"><button type="submit" class="link-botao">Sair</button></form>
+    {% endif %}
+    <button type="button" id="alternar-dicas" class="botao-dicas" aria-pressed="true" title="Mostrar ou esconder exemplos e dicas nos campos">💡 Dicas</button>
+  </nav>
+</header>
+
+<div class="layout {% if projeto %}com-lateral{% endif %}">
+  {% if projeto %}
+  <button type="button" class="botao botao-sec abrir-menu" id="abrir-menu" aria-expanded="false" aria-controls="menu-lateral">☰ Menu do projeto</button>
+  <aside class="lateral" id="menu-lateral">
+    {% set pid = projeto.id %}
+    <a class="{{ 'ativo' if secao == 'visao' }}" href="{{ url_for('projeto', projeto_id=pid) }}">Visão geral</a>
+    <a class="{{ 'ativo' if secao == 'fluxo' }}" href="{{ url_for('fluxo', projeto_id=pid) }}">🧭 Fluxo do projeto</a>
+    <div class="lateral-grupo">1. Iniciar</div>
+    <a class="{{ 'ativo' if secao == 'abordagem' }}" href="{{ url_for('abordagem', projeto_id=pid) }}">Como vamos trabalhar</a>
+    {% if secao == 'abordagem' %}
+    <div class="lateral-sub">
+      <a class="{{ 'ativo' if sub == 'abordagem' }}" href="{{ url_for('abordagem', projeto_id=pid) }}">Abordagem</a>
+      <a data-avancado class="{{ 'ativo' if sub == 'fases' }}" href="{{ url_for('ciclo.fases', projeto_id=pid) }}">Fases do ciclo de vida</a>
+      <a data-avancado class="{{ 'ativo' if sub == 'tailoring' }}" href="{{ url_for('ciclo.tailoring', projeto_id=pid) }}">Tailoring</a>
+    </div>
+    {% endif %}
+    <a class="{{ 'ativo' if secao == 'abertura' }}" href="{{ url_for('abertura', projeto_id=pid) }}">Termo de abertura</a>
+    <a class="{{ 'ativo' if secao == 'partes' }}" href="{{ url_for('partes_registro', projeto_id=pid) }}">Pessoas envolvidas</a>
+    {% if secao == 'partes' %}
+    <div class="lateral-sub">
+      {% for chave, nome, _ in pmbok.ETAPAS_ENGAJAMENTO %}
+        {% set rota = {'identificar':'partes_registro','analisar':'partes_analise','priorizar':'partes_priorizacao','engajar':'partes_engajamento','monitorar':'partes_monitoramento'}[chave] %}
+        <a class="{{ 'ativo' if etapa == chave }}" href="{{ url_for(rota, projeto_id=pid) }}">{{ loop.index }}. {{ nome }}</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <div class="lateral-grupo">2. Planejar</div>
+    <a class="{{ 'ativo' if secao == 'equipe' }}" href="{{ url_for('equipe.membros', projeto_id=pid) }}">Equipe</a>
+    {% if secao == 'equipe' %}
+    <div class="lateral-sub">
+      <a class="{{ 'ativo' if sub == 'membros' }}" href="{{ url_for('equipe.membros', projeto_id=pid) }}">Membros e liderança</a>
+      <a class="{{ 'ativo' if sub == 'acordo' }}" href="{{ url_for('equipe.acordo', projeto_id=pid) }}">Acordo de trabalho</a>
+      <a class="{{ 'ativo' if sub == 'raci' }}" href="{{ url_for('equipe.matriz', projeto_id=pid) }}">Matriz RACI</a>
+      <a class="{{ 'ativo' if sub == 'saude' }}" href="{{ url_for('equipe.saude', projeto_id=pid) }}">Saúde da equipe</a>
+    </div>
+    {% endif %}
+    <a class="{{ 'ativo' if secao == 'entrega' }}" href="{{ url_for('entrega.painel', projeto_id=pid) }}">Escopo e entregas</a>
+    {% if secao == 'entrega' %}
+    <div class="lateral-sub">
+      <a class="{{ 'ativo' if sub == 'painel' }}" href="{{ url_for('entrega.painel', projeto_id=pid) }}">Painel</a>
+      <a class="{{ 'ativo' if sub == 'itens' }}" href="{{ url_for('entrega.itens', projeto_id=pid) }}">Escopo e backlog</a>
+      <a class="{{ 'ativo' if sub == 'quadro' }}" href="{{ url_for('entrega.quadro', projeto_id=pid) }}">Quadro de tarefas</a>
+      <a data-avancado class="{{ 'ativo' if sub == 'qualidade' }}" href="{{ url_for('entrega.qualidade', projeto_id=pid) }}">Custo da qualidade</a>
+      <a class="{{ 'ativo' if sub == 'beneficios' }}" href="{{ url_for('entrega.beneficios', projeto_id=pid) }}">Benefícios</a>
+    </div>
+    {% endif %}
+    <a class="{{ 'ativo' if secao == 'incerteza' }}" href="{{ url_for('incerteza.painel', projeto_id=pid) }}">Riscos</a>
+    {% if secao == 'incerteza' %}
+    <div class="lateral-sub">
+      <a class="{{ 'ativo' if sub == 'painel' }}" href="{{ url_for('incerteza.painel', projeto_id=pid) }}">Painel e limites</a>
+      <a class="{{ 'ativo' if sub == 'riscos' }}" href="{{ url_for('incerteza.riscos', projeto_id=pid) }}">Registro de riscos</a>
+      <a class="{{ 'ativo' if sub == 'outras' }}" href="{{ url_for('incerteza.outras', projeto_id=pid) }}">Ambiguidade, complexidade e volatilidade</a>
+      <a class="{{ 'ativo' if sub == 'premortem' }}" href="{{ url_for('metodos.premortem', projeto_id=pid) }}">Pré-mortem</a>
+    </div>
+    {% endif %}
+    <a class="{{ 'ativo' if secao == 'cronograma' }}" href="{{ url_for('medicao.cronograma', projeto_id=pid) }}">Prazo e orçamento</a>
+    {% if secao == 'cronograma' %}
+    <div class="lateral-sub">
+      <a class="{{ 'ativo' if sub != 'gantt' }}" href="{{ url_for('medicao.cronograma', projeto_id=pid) }}">Datas e custos</a>
+      <a class="{{ 'ativo' if sub == 'gantt' }}" href="{{ url_for('metodos.gantt', projeto_id=pid) }}">Gantt</a>
+    </div>
+    {% endif %}
+    <a data-avancado class="{{ 'ativo' if secao == 'suprimentos' }}" href="{{ url_for('suprimentos.painel', projeto_id=pid) }}">Compras e recursos</a>
+    <div class="lateral-grupo">3. Executar</div>
+    <a class="{{ 'ativo' if secao == 'trabalho' }}" href="{{ url_for('trabalho.painel', projeto_id=pid) }}">Dia a dia do projeto</a>
+    {% if secao == 'trabalho' %}
+    <div class="lateral-sub">
+      <a class="{{ 'ativo' if sub == 'painel' }}" href="{{ url_for('trabalho.painel', projeto_id=pid) }}">Painel</a>
+      <a class="{{ 'ativo' if sub == 'questoes' }}" href="{{ url_for('trabalho.questoes', projeto_id=pid) }}">Questões</a>
+      <a class="{{ 'ativo' if sub == 'mudancas' }}" href="{{ url_for('trabalho.mudancas', projeto_id=pid) }}">Mudanças</a>
+      <a class="{{ 'ativo' if sub == 'licoes' }}" href="{{ url_for('trabalho.licoes', projeto_id=pid) }}">Lições aprendidas</a>
+    </div>
+    {% endif %}
+    <div class="lateral-grupo">4. Acompanhar</div>
+    <a class="{{ 'ativo' if secao == 'medicao' }}" href="{{ url_for('medicao.painel', projeto_id=pid) }}">Acompanhamento</a>
+    {% if secao == 'medicao' %}
+    <div class="lateral-sub">
+      <a class="{{ 'ativo' if sub == 'painel' }}" href="{{ url_for('medicao.painel', projeto_id=pid) }}">Painel de desempenho</a>
+      <a class="{{ 'ativo' if sub == 'burndown' }}" href="{{ url_for('metodos.burndown_pagina', projeto_id=pid) }}">Burndown da iteração</a>
+      <a class="{{ 'ativo' if sub == 'indicadores' }}" href="{{ url_for('medicao.indicadores', projeto_id=pid) }}">Indicadores (KPIs)</a>
+      <a class="{{ 'ativo' if sub == 'relatorios' }}" href="{{ url_for('medicao.relatorios', projeto_id=pid) }}">Relatórios de status</a>
+    </div>
+    {% endif %}
+    <a class="{{ 'ativo' if secao == 'dominios' }}" href="{{ url_for('dominios', projeto_id=pid) }}">Checklist dos 8 domínios</a>
+    <div class="lateral-grupo">5. Encerrar</div>
+    <a class="{{ 'ativo' if secao == 'encerramento' }}" href="{{ url_for('ciclo.encerramento', projeto_id=pid) }}">Encerramento</a>
+    <div class="lateral-grupo">Princípios</div>
+    <a class="{{ 'ativo' if secao == 'principios' and sub == 'avaliacao' }}" href="{{ url_for('principios.autoavaliacao', projeto_id=pid) }}">Autoavaliação dos 12</a>
+    <a data-avancado class="{{ 'ativo' if secao == 'principios' and sub == 'valor' }}" href="{{ url_for('principios.business_case', projeto_id=pid) }}">Business case e valor</a>
+    <a data-avancado class="{{ 'ativo' if secao == 'principios' and sub == 'conformidade' }}" href="{{ url_for('principios.conformidade', projeto_id=pid) }}">Conformidade e sustentabilidade</a>
+    <a data-avancado class="{{ 'ativo' if secao == 'principios' and sub == 'adocao' }}" href="{{ url_for('principios.adocao', projeto_id=pid) }}">Mudança organizacional</a>
+    <a data-avancado class="{{ 'ativo' if secao == 'principios' and sub == 'decisoes' }}" href="{{ url_for('principios.decisoes', projeto_id=pid) }}">Decisões e premissas</a>
+    <div class="lateral-grupo">Apoio</div>
+    <a class="{{ 'ativo' if secao == 'glossario' }}" href="{{ url_for('glossario', projeto_id=pid) }}">📖 Glossário simples</a>
+    <a class="{{ 'ativo' if secao == 'agenda' }}" href="{{ url_for('pmo.agenda', projeto_id=pid) }}">📅 Agenda de prazos</a>
+    <a class="{{ 'ativo' if secao == 'historico' }}" href="{{ url_for('dados.historico', projeto_id=pid) }}">🕘 Histórico de alterações</a>
+    <button type="button" id="alternar-modo" class="botao-modo">Mostrar todas as telas</button>
+    <p class="pequeno mudo modo-nota" id="modo-nota">Modo essencial: telas avançadas ocultas.</p>
+  </aside>
+  {% endif %}
+
+  <main class="conteudo" id="conteudo" tabindex="-1">
+    {% if projeto and projeto.situacao and projeto.situacao != 'ativo' %}
+    <div class="faixa-encerrado">Projeto {{ 'encerrado' if projeto.situacao == 'encerrado' else 'cancelado' }} em {{ projeto.encerrado_em|data_br }}.
+      Os registros continuam disponíveis para consulta e aprendizado. <a href="{{ url_for('ciclo.encerramento', projeto_id=projeto.id) }}">Ver encerramento</a></div>
+    {% endif %}
+    {% if projeto and projeto.situacao and projeto.situacao != 'ativo' %}
+    <div class="faixa-encerrado" role="status">🔒 Projeto {{ projeto.situacao }}: somente consulta.
+      <a href="{{ url_for('ciclo.encerramento', projeto_id=projeto.id) }}">Reabrir</a></div>
+    {% endif %}
+    {% if projeto and ajuda_pagina %}
+    <aside class="ajuda-pagina" id="ajuda-pagina"><strong>Para que serve:</strong> {{ ajuda_pagina[0] }} <strong>O que fazer:</strong> {{ ajuda_pagina[1] }}
+      <a href="{{ url_for('fluxo', projeto_id=projeto.id) }}">Ver o fluxo →</a>
+      {% set ex = url_exemplo() %}{% if ex %} · <a href="{{ ex }}" target="_blank" rel="noopener">Ver exemplo preenchido ↗</a>{% endif %}</aside>
+    {% endif %}
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in msgs %}<div class="flash flash-{{ cat }}" role="{{ 'alert' if cat == 'erro' else 'status' }}">{{ msg }}</div>{% endfor %}
+    {% endwith %}
+    {% block conteudo %}{% endblock %}
+  </main>
+</div>
+<script id="dicas-dados" type="application/json">{{ dicas_json|safe }}</script>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

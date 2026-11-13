@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import grafico %}
+{% block titulo %}Burndown — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<div class="cabecalho"><div><h1>Burndown da iteração</h1>
+  <p class="sub">Quanto trabalho falta até o fim da iteração. Se a linha “Restante” fica acima da “Ideal”, a meta corre risco: converse na daily.</p></div>
+  {% if iteracoes %}<form method="get"><select name="iteracao" data-enviar-ao-mudar aria-label="Iteração">{% for x in iteracoes %}<option value="{{ x.id }}" {{ 'selected' if it and x.id == it.id }}>{{ x.nome }}</option>{% endfor %}</select></form>{% endif %}</div>
+<section class="cartao">
+{% if bd %}
+  <p><strong>{{ bd.restante|round(1) }}</strong> de {{ bd.total|round(1) }} {{ bd.unidade }} restantes{% if it.meta %} · meta: {{ it.meta }}{% endif %}</p>
+  {{ grafico(bd) }}
+{% elif not iteracoes %}<p class="mudo">Crie iterações em <a href="{{ url_for('medicao.cronograma', projeto_id=projeto.id) }}">Prazo e orçamento</a>.</p>
+{% else %}<p class="mudo">Nenhum item planejado para esta iteração. Associe itens à iteração em Prazo e orçamento.</p>{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Análise — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Compreender e analisar</h1>
+<p class="sub">Etapa 2. {{ pmbok.ETAPAS_ENGAJAMENTO[1][2] }} Escala de 1 a 5. Mantenha esta análise restrita à equipe do projeto.</p>
+{{ m.fluxo_partes(fluxo, etapa, projeto) }}
+
+{% if partes %}
+<form method="post">
+<section class="cartao">
+  <div class="tabela-rolagem">
+  <table class="tabela tabela-edicao">
+    <thead>
+      <tr><th rowspan="2">Parte interessada</th><th rowspan="2">Poder</th><th rowspan="2">Interesse</th><th rowspan="2">Influência</th><th rowspan="2">Impacto</th><th rowspan="2">Atitude</th>
+          <th colspan="3" class="centro">Saliência</th><th rowspan="2">Classificação</th></tr>
+      <tr><th title="Poder">P</th><th title="Legitimidade">L</th><th title="Urgência">U</th></tr>
+    </thead>
+    <tbody>
+    {% for s in partes %}
+      <tr>
+        <td><a href="{{ url_for('parte_detalhe', projeto_id=projeto.id, parte_id=s.id) }}">{{ s.nome }}</a><div class="mudo pequeno">{{ s.papel }}</div></td>
+        <td>{{ m.escala('poder_' ~ s.id, s.poder, aria='Poder de ' ~ s.nome) }}</td>
+        <td>{{ m.escala('interesse_' ~ s.id, s.interesse, aria='Interesse de ' ~ s.nome) }}</td>
+        <td>{{ m.escala('influencia_' ~ s.id, s.influencia, aria='Influência de ' ~ s.nome) }}</td>
+        <td>{{ m.escala('impacto_' ~ s.id, s.impacto, aria='Impacto de ' ~ s.nome) }}</td>
+        <td>{{ m.opcoes('atitude_' ~ s.id, pmbok.ATITUDES, s.atitude, aria='Atitude de ' ~ s.nome) }}</td>
+        <td class="centro"><input type="checkbox" name="sal_poder_{{ s.id }}" value="1" {{ 'checked' if s.sal_poder }} aria-label="Poder"></td>
+        <td class="centro"><input type="checkbox" name="sal_legitimidade_{{ s.id }}" value="1" {{ 'checked' if s.sal_legitimidade }} aria-label="Legitimidade"></td>
+        <td class="centro"><input type="checkbox" name="sal_urgencia_{{ s.id }}" value="1" {{ 'checked' if s.sal_urgencia }} aria-label="Urgência"></td>
+        <td><span class="selo selo-sal-{{ s.salience_classe }}">{{ s.salience }}</span></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <div class="acoes"><button class="botao" type="submit">Salvar análise</button></div>
+</section>
+</form>
+
+<section class="cartao dica">
+  <h3>Modelo de Saliência <span class="fonte">seção 4.2.7.5</span></h3>
+  <p>Classifica as partes interessadas por três atributos: <strong>poder</strong> de influenciar, <strong>legitimidade</strong>
+    da relação com o projeto e <strong>urgência</strong> das demandas. Com os três atributos, a parte é <em>definitiva</em>;
+    com dois, <em>expectante</em> (dominante, perigosa ou dependente); com um, <em>latente</em> (adormecida, discricionária ou exigente).
+    Os nomes das sete classes vêm do artigo original de Mitchell, Agle e Wood, citado pelo guia.</p>
+</section>
+{% else %}
+<div class="vazio"><p>Identifique partes interessadas antes de analisá-las.</p>
+  <a class="botao" href="{{ url_for('parte_nova', projeto_id=projeto.id) }}">Identificar parte interessada</a></div>
+{% endif %}
+{% endblock %}

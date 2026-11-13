@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m14 with context %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Lições aprendidas — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Lições aprendidas</h1>
+<p class="exportar-linha">{{ m14.exportar(projeto, 'licoes') }}</p>
+<p class="sub">Registro de lições aprendidas (seção 4.6.2) e aprendizado ao longo do projeto (2.5.8). Projetos são temporários e muito
+  conhecimento se perde no encerramento; registre o que vale manter e o que melhorar, e para quem isso serve.</p>
+
+<div class="duas-colunas">
+  <section class="cartao" id="nova">
+    <h2>Registrar lição</h2>
+    {% if questao_ref %}<p class="dica-inline">Lição da questão <strong>Q-{{ questao_ref.codigo }}</strong> · {{ questao_ref.titulo }}</p>{% endif %}
+    <form method="post" class="formulario">
+      {% if questao_ref %}<input type="hidden" name="questao_id" value="{{ questao_ref.id }}"><input type="hidden" name="voltar" value="questao">{% endif %}
+      <fieldset class="opcoes-abordagem">
+        <legend>Tipo</legend>
+        {% for k, v in pmbok.TIPOS_LICAO %}<label class="check"><input type="radio" name="tipo" value="{{ k }}" {{ 'checked' if k == 'melhorar' }}> {{ v }}</label>{% endfor %}
+      </fieldset>
+      <label>O que aconteceu / o que aprendemos *<textarea name="descricao" rows="2" required>{{ questao_ref.resolucao if questao_ref else '' }}</textarea></label>
+      <label>Recomendação <span class="ajuda">O que fazer diferente (ou continuar fazendo) da próxima vez</span><textarea name="recomendacao" rows="2"></textarea></label>
+      <div class="grade-2">
+        <label>Data<input type="date" name="data" value="{{ hoje }}" max="{{ hoje }}"></label>
+        <label>Origem {{ m.opcoes('origem', pmbok.ORIGENS_LICAO, 'questao' if questao_ref else 'retrospectiva') }}</label>
+        <label>Domínio relacionado
+          <select name="dominio"><option value="">—</option>
+            {% for d in pmbok.DOMINIOS %}<option value="{{ d.chave }}" {{ 'selected' if questao_ref and d.chave == 'trabalho' }}>{{ d.nome }}</option>{% endfor %}
+          </select>
+        </label>
+        <label>Serve para {{ m.opcoes('alcance', pmbok.ALCANCES_LICAO, 'projeto') }}</label>
+      </div>
+      <label>Tipo de conhecimento {{ m.opcoes('conhecimento', pmbok.TIPOS_CONHECIMENTO, 'explicito') }}</label>
+      <div class="acoes"><button class="botao" type="submit">Registrar lição</button></div>
+    </form>
+  </section>
+
+  <section class="cartao">
+    <h2>Explícito ou tácito? <span class="fonte">2.5.8.2</span></h2>
+    <p><strong>Explícito</strong>: pode ser escrito com palavras, imagens ou números (passos de um processo, uma regra, um checklist).
+      Compartilhe por documentos, registros e repositórios.</p>
+    <p><strong>Tácito</strong>: experiência, intuição e habilidade prática, difíceis de documentar. Compartilhe conectando pessoas:
+      conversas, acompanhamento no trabalho (job shadowing), workshops e fóruns.</p>
+    <p class="mudo pequeno">Para lições tácitas, a recomendação deve dizer <em>quem</em> procurar, e não só o que fazer.</p>
+  </section>
+</div>
+
+<section class="cartao">
+  <div class="titulo-secao">
+    <h2>Registro ({{ total }})</h2>
+    <form class="filtros" method="get">
+      <select name="tipo" data-enviar-ao-mudar aria-label="Tipo">
+        <option value="">Todas</option>
+        {% for k, v in pmbok.TIPOS_LICAO %}<option value="{{ k }}" {{ 'selected' if tipo == k }}>{{ v }}</option>{% endfor %}
+      </select>
+      <noscript><button class="botao botao-sec" type="submit">Filtrar</button></noscript>
+    </form>
+  </div>
+  {% if licoes %}
+  <div class="tabela-rolagem">
+  <table class="tabela">
+    <thead><tr><th>Data</th><th>Tipo</th><th>Lição e recomendação</th><th>Origem</th><th>Domínio</th><th>Conhecimento</th><th>Serve para</th><th>Aplicada?</th><th></th></tr></thead>
+    <tbody>
+    {% for l in licoes %}
+      <tr>
+        <td>{{ l.data|data_br }}</td>
+        <td><span class="selo selo-licao-{{ l.tipo }}">{{ 'Manter' if l.tipo == 'manter' else 'Melhorar' }}</span></td>
+        <td>{{ l.descricao }}{% if l.recomendacao %}<div class="mudo">→ {{ l.recomendacao }}</div>{% endif %}</td>
+        <td>{{ dict(pmbok.ORIGENS_LICAO).get(l.origem, '—') }}{% if l.questao_codigo %} <a href="{{ url_for('trabalho.questao', projeto_id=projeto.id, questao_id=l.questao_id) }}">Q-{{ l.questao_codigo }}</a>{% endif %}</td>
+        <td>{{ pmbok.DOMINIOS_POR_CHAVE[l.dominio].nome if l.dominio else '—' }}</td>
+        <td>{{ 'Tácito' if l.conhecimento == 'tacito' else 'Explícito' }}</td>
+        <td>{{ dict(pmbok.ALCANCES_LICAO).get(l.alcance, '—') }}</td>
+        <td><form method="post"><input type="hidden" name="acao" value="aplicar"><input type="hidden" name="licao_id" value="{{ l.id }}">
+          {% if l.aplicada %}<span class="licao-aplicada">✓ {{ l.aplicada_em|data_br }}</span>
+          <input type="hidden" name="aplicada" value="0"><button class="botao-mini" type="submit">desfazer</button>
+          {% else %}<input type="hidden" name="aplicada" value="1"><button class="botao-mini" type="submit" title="A equipe já mudou a forma de trabalhar por causa desta lição">marcar aplicada</button>{% endif %}
+        </form></td>
+        <td><form method="post"><input type="hidden" name="acao" value="excluir"><input type="hidden" name="licao_id" value="{{ l.id }}">
+          <button class="link-perigo" type="submit" title="Remover">✕</button></form></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="mudo">{{ 'Nenhuma lição com esse filtro.' if total else 'Nenhuma lição registrada ainda.' }}</p>
+  {% endif %}
+</section>
+{% endblock %}

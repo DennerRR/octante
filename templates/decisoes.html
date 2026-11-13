@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Decisões e premissas — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Decisões e premissas</h1>
+<p class="sub">Princípios 5 (pensamento sistêmico), 6 (liderança) e 9 (complexidade). Registrar por que se decidiu, quem participou e o que a decisão
+  afeta em outras partes do projeto torna o raciocínio visível. Premissas são verdades assumidas: valide-as cedo, porque uma premissa falsa vira problema.</p>
+
+<section class="cartao">
+  <h2>Premissas</h2>
+  {% if premissas_termo %}<p class="mudo pequeno">Do termo de abertura: {{ premissas_termo }}</p>{% endif %}
+  {% if premissas %}
+  <div class="tabela-rolagem"><table class="tabela">
+    <thead><tr><th>Premissa</th><th>Se for falsa</th><th>Como validar</th><th>Validar até</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for x in premissas %}
+    <tr class="{{ 'inativa' if x.status == 'validada' }}">
+      <td>{{ x.descricao }}</td><td>{{ x.se_falsa }}</td><td>{{ x.como_validar }}</td>
+      <td>{{ x.validar_ate|data_br }}{% if x.vencida %} <span class="selo selo-opositor">vencida</span>{% endif %}</td>
+      <td><form method="post" class="em-linha"><input type="hidden" name="acao" value="status_premissa"><input type="hidden" name="registro_id" value="{{ x.id }}">
+        {{ m.opcoes('status', pmbok.STATUS_PREMISSA, x.status, aria='Status da premissa') }}<button class="botao botao-sec botao-mini" type="submit">ok</button></form></td>
+      <td><form method="post"><input type="hidden" name="acao" value="excluir_premissa"><input type="hidden" name="registro_id" value="{{ x.id }}">
+        <button class="link-perigo" type="submit" title="Remover premissa">✕</button></form></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<p class="mudo">Nenhuma premissa registrada.</p>{% endif %}
+  <form method="post" class="formulario">
+    <input type="hidden" name="acao" value="premissa">
+    <div class="grade-2">
+      <label>Nova premissa<input name="descricao" required placeholder="Ex.: Os pacientes aceitam receber lembretes por WhatsApp"></label>
+      <label>O que acontece se for falsa<input name="se_falsa"></label>
+    </div>
+    <div class="grade-acoes">
+      <label>Como validar<input name="como_validar" placeholder="Ex.: pesquisa com 30 pacientes"></label>
+      <label>Validar até<input type="date" name="validar_ate"></label>
+      <div class="acoes"><button class="botao" type="submit">Registrar premissa</button></div>
+    </div>
+  </form>
+</section>
+
+<section class="cartao">
+  <h2>Registro de decisões</h2>
+  {% for d in decisoes %}
+  <article class="decisao">
+    <div class="cabecalho">
+      <h3>{{ d.titulo }} <span class="mudo pequeno">· {{ d.data|data_br }}</span></h3>
+      <div>{% if d.revisar %}<span class="selo selo-nivel-medio">revisar</span>{% endif %}
+        <form method="post" class="em-linha"><input type="hidden" name="acao" value="excluir_decisao"><input type="hidden" name="registro_id" value="{{ d.id }}">
+        <button class="link-perigo" type="submit" title="Remover decisão">✕</button></form></div>
+    </div>
+    <dl class="campos-decisao">
+      {% if d.contexto %}<dt>Contexto</dt><dd>{{ d.contexto }}</dd>{% endif %}
+      {% if d.alternativas %}<dt>Alternativas</dt><dd>{{ d.alternativas }}</dd>{% endif %}
+      {% if d.decisao %}<dt>Decisão</dt><dd>{{ d.decisao }}</dd>{% endif %}
+      {% if d.decidido_por or d.envolvidos %}<dt>Quem</dt><dd>{{ d.decidido_por }}{% if d.envolvidos %} (envolvidos: {{ d.envolvidos }}){% endif %}</dd>{% endif %}
+      {% if d.efeitos %}<dt>Efeitos em outras áreas</dt><dd>{{ d.efeitos }}</dd>{% endif %}
+      {% if d.revisar_em %}<dt>Revisar em</dt><dd>{{ d.revisar_em|data_br }}</dd>{% endif %}
+    </dl>
+  </article>
+  {% else %}<p class="mudo">Nenhuma decisão registrada.</p>{% endfor %}
+
+  <form method="post" class="formulario destaque-borda">
+    <input type="hidden" name="acao" value="decisao">
+    <h3>Nova decisão</h3>
+    <div class="grade-acoes">
+      <label>Título<input name="titulo" required placeholder="Ex.: Usar WhatsApp em vez de SMS"></label>
+      <label>Data<input type="date" name="data" value="{{ hoje }}" max="{{ hoje }}"></label>
+      <div></div>
+    </div>
+    <label>Contexto (o problema)<textarea name="contexto" rows="2"></textarea></label>
+    <label>Alternativas consideradas<textarea name="alternativas" rows="2"></textarea></label>
+    <label>Decisão tomada e por quê<textarea name="decisao" rows="2"></textarea></label>
+    <div class="grade-3">
+      <label>Quem decidiu<input name="decidido_por"></label>
+      <label>Quem foi envolvido<input name="envolvidos"></label>
+      <label>Revisar em<input type="date" name="revisar_em"></label>
+    </div>
+    <label>Efeitos em outras áreas (escopo, prazo, custo, equipe, partes, riscos)<textarea name="efeitos" rows="2"></textarea></label>
+    <div class="acoes"><button class="botao" type="submit">Registrar decisão</button></div>
+  </form>
+</section>
+{% endblock %}

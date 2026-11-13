@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m14 with context %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}{{ 'Nova questão' if novo else q.rotulo }} — {{ projeto.nome }}{% endblock %}
+{% macro valor_num(v) -%}{{ ('%.2f'|format(v)).replace('.', ',') if v is number else '' }}{%- endmacro %}
+{% block conteudo %}
+<p><a href="{{ url_for('trabalho.questoes', projeto_id=projeto.id) }}">← Registro de questões</a></p>
+<div class="cabecalho">
+  <div>
+    <h1>{{ 'Registrar questão' if novo else q.rotulo ~ ' · ' ~ q.titulo }}</h1>
+{% if not novo %}{{ m14.completude_barra(completude('questao', q)) }}{% endif %}
+    {% if not novo %}
+    <p class="sub">Aberta em {{ q.criado_em|data_br }}{% if q.resolvido_em %} · resolvida em {{ q.resolvido_em|data_br }} ({{ q.dias_aberta }} dias){% elif q.dias_aberta == 0 %} · aberta hoje{% else %} · há {{ q.dias_aberta }} dia{{ 's' if q.dias_aberta != 1 }}{% endif %}
+      {% if q.atrasada %}<span class="selo selo-opositor">prazo vencido</span>{% endif %}</p>
+    {% endif %}
+  </div>
+  {% if not novo and q.status == 'resolvida' %}
+  <a class="botao" href="{{ url_for('trabalho.licoes', projeto_id=projeto.id, questao=q.id) }}#nova">Registrar lição aprendida</a>
+  {% endif %}
+</div>
+
+{% if not novo and q.risco_id %}
+<div class="cartao dica">Esta questão veio do risco <a href="{{ url_for('incerteza.risco_detalhe', projeto_id=projeto.id, risco_id=q.risco_id) }}">R-{{ q.risco_codigo }}</a>, que ocorreu.
+  A reserva usada aqui é descontada da <strong>reserva de contingência</strong>.</div>
+{% endif %}
+
+<form method="post" class="formulario">
+  <section class="cartao">
+    <label>Título *<input name="titulo" required value="{{ q.titulo or '' }}" placeholder="Ex.: Servidor de homologação fora do ar"></label>
+    <label>Descrição<textarea name="descricao" rows="3">{{ q.descricao or '' }}</textarea></label>
+    <div class="grade-4">
+      <label>Prioridade {{ m.opcoes('prioridade', pmbok.PRIORIDADES, q.prioridade) }}</label>
+      <label>Responsável<input name="responsavel" value="{{ q.responsavel or '' }}"></label>
+      <label>Prazo<input type="date" name="prazo" value="{{ q.prazo or '' }}"></label>
+      <label>Status {{ m.opcoes('status', pmbok.STATUS_QUESTAO, q.status) }}</label>
+    </div>
+    <div class="grade-2">
+      <label>Parte interessada envolvida
+        <select name="parte_id"><option value="">—</option>
+          {% for s in partes %}<option value="{{ s.id }}" {{ 'selected' if q.parte_id == s.id }}>{{ s.nome }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Risco de origem
+        <select name="risco_id"><option value="">— nenhum (evento não previsto)</option>
+          {% for r in riscos %}<option value="{{ r.id }}" {{ 'selected' if q.risco_id == r.id }}>R-{{ r.codigo }} · {{ r.titulo }}</option>{% endfor %}
+        </select>
+      </label>
+    </div>
+    <label>Resolução <span class="ajuda">Obrigatória para marcar como resolvida.</span>
+      <textarea name="resolucao" rows="2">{{ q.resolucao or '' }}</textarea></label>
+    <fieldset>
+      <legend>Reserva usada <span class="fonte">seção 2.8.5.3</span></legend>
+      <p class="mudo pequeno">Questões ligadas a um risco consomem a reserva de contingência; eventos não previstos consomem a reserva de gerenciamento.</p>
+      <div class="grade-2">
+        <label>Valor (R$)<input name="reserva_usada_custo" inputmode="decimal" value="{{ valor_num(q.reserva_usada_custo) }}"></label>
+        <label>Dias<input type="number" min="0" name="reserva_usada_dias" value="{{ q.reserva_usada_dias if q.reserva_usada_dias is number else '' }}"></label>
+      </div>
+    </fieldset>
+  </section>
+  <div class="acoes barra-salvar">
+    <button class="botao" type="submit">{{ 'Registrar' if novo else 'Salvar' }}</button>
+    <a class="botao botao-sec" href="{{ url_for('trabalho.questoes', projeto_id=projeto.id) }}">Cancelar</a>
+  </div>
+</form>
+
+{% if licoes %}
+<section class="cartao">
+  <h2>Lições aprendidas desta questão</h2>
+  <ul class="historico">{% for l in licoes %}<li><span class="selo selo-licao-{{ l.tipo }}">{{ 'Manter' if l.tipo == 'manter' else 'Melhorar' }}</span> {{ l.descricao }}{% if l.recomendacao %} <span class="mudo">→ {{ l.recomendacao }}</span>{% endif %}</li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+{% if not novo %}
+<form method="post" class="cartao perigo">
+  <input type="hidden" name="acao" value="excluir">
+  <p>Excluir remove a questão do registro. Para manter o histórico, prefira marcá-la como resolvida.</p>
+  <button class="botao botao-perigo" type="submit">Excluir questão</button>
+</form>
+{% endif %}
+{% if not novo %}{{ m14.pedir_revisao(projeto, 'questao', q.id, q.rotulo ~ ' ' ~ q.titulo) }}{% endif %}
+{% endblock %}

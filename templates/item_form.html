@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m14 with context %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}{{ 'Novo item' if novo else i.rotulo }} — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+{% set status_form = pedido if pedido is defined else (i.status or 'a_fazer') %}
+<p><a href="{{ url_for('entrega.itens', projeto_id=projeto.id) }}">← Escopo e backlog</a></p>
+<h1>{{ 'Novo item de escopo' if novo else i.rotulo ~ ' · ' ~ i.titulo }}</h1>
+{% if not novo %}{{ m14.completude_barra(completude('item', i)) }}{% endif %}
+{% if not novo %}<p class="sub"><span class="selo selo-item-{{ i.status }}">{{ dict(pmbok.STATUS_ITEM)[i.status] }}</span>
+  registrado em {{ i.criado_em|data_br }}{% if i.iniciado_em %} · iniciado em {{ i.iniciado_em|data_br }}{% endif %}{% if i.concluido_em %} · concluído em {{ i.concluido_em|data_br }}{% endif %}{% if i.aceito_em %} · aceito em {{ i.aceito_em|data_br }}{% endif %}</p>{% endif %}
+
+<form method="post" class="formulario">
+  <section class="cartao">
+    <h2>Item</h2>
+    <div class="grade-2">
+      <label>Tipo {{ m.opcoes('tipo', pmbok.TIPOS_ITEM, i.tipo) }}</label>
+      <label>Faz parte de
+        <select name="pai_id"><option value="">— nível mais alto —</option>
+          {% for x in pais %}<option value="{{ x.id }}" {{ 'selected' if i.pai_id == x.id }}>{{ '— ' * x.nivel }}{{ x.rotulo }} · {{ x.titulo }}</option>{% endfor %}
+        </select></label>
+    </div>
+    <label>Título *<input name="titulo" required value="{{ i.titulo or '' }}" placeholder="Ex.: Como paciente, quero agendar uma consulta pelo celular"></label>
+    <label>Descrição<textarea name="descricao" rows="2">{{ i.descricao or '' }}</textarea></label>
+    <div class="grade-4">
+      <label>Valor de negócio {{ m.escala('valor', i.valor) }}</label>
+      <label>Estimativa ({{ projeto.unidade_estimativa }})<input name="estimativa" inputmode="decimal" value="{{ '%g'|format(i.estimativa) if i.estimativa is number else '' }}"></label>
+      <label>Ordem de prioridade<input type="number" min="1" name="ordem" value="{{ i.ordem if i.ordem is number else '' }}"></label>
+      <label>Responsável<input name="responsavel" value="{{ i.responsavel or '' }}"></label>
+    </div>
+  </section>
+
+  <section class="cartao">
+    <h2>Requisito <span class="fonte">seção 2.6.2.1</span></h2>
+    <label>Critérios de aceite <span class="ajuda">O que precisa ser verdade para o cliente aceitar. Um por linha.</span>
+      <textarea name="criterios_aceite" rows="3">{{ i.criterios_aceite or '' }}</textarea></label>
+    <fieldset>
+      <legend>O requisito está bem documentado?</legend>
+      <label class="check"><input type="checkbox" name="q_claro" value="1" {{ 'checked' if i.q_claro }}> <span><strong>Claro</strong> <span class="mudo">— só há uma forma de interpretar</span></span></label>
+      <label class="check"><input type="checkbox" name="q_conciso" value="1" {{ 'checked' if i.q_conciso }}> <span><strong>Conciso</strong> <span class="mudo">— dito com o mínimo de palavras</span></span></label>
+      <label class="check"><input type="checkbox" name="q_consistente" value="1" {{ 'checked' if i.q_consistente }}> <span><strong>Consistente</strong> <span class="mudo">— não contradiz outros requisitos</span></span></label>
+      <p class="mudo pequeno"><strong>Verificável</strong> é marcado sozinho quando há critérios de aceite, e <strong>rastreável</strong> pelo código do item.
+        <strong>Completo</strong> vale para o conjunto: revise se os itens cobrem tudo o que a próxima entrega precisa.</p>
+    </fieldset>
+  </section>
+
+  <section class="cartao">
+    <h2>Prioridade e dependências</h2>
+    <div class="grade-2">
+      <label>Prioridade MoSCoW <span class="ajuda">Deve ter: sem isso a entrega não serve. Deveria: importante, mas há contorno. Poderia: desejável. Não terá: fica para depois.</span>
+        <select name="moscow"><option value="">—</option>{% for c, n in MOSCOW %}<option value="{{ c }}" {{ 'selected' if i.moscow == c }}>{{ n }}</option>{% endfor %}</select></label>
+      <label>Depende de <span class="ajuda">Itens que precisam terminar antes deste começar (Ctrl/Cmd para marcar vários). Aparecem no Gantt.</span>
+        <input type="hidden" name="dependencias_enviadas" value="1">
+        {% set deps = dependencias_do_item(i.id) if i.id else [] %}
+        <select name="depende_de" multiple size="4">{% for o in outros_itens(projeto.id, i.id) %}<option value="{{ o.id }}" {{ 'selected' if o.id in deps }}>I-{{ o.codigo }} · {{ o.titulo }}</option>{% endfor %}</select></label>
+    </div>
+  </section>
+
+  <section class="cartao">
+    <h2>Origem</h2>
+    <div class="grade-3">
+      <label>Parte interessada solicitante
+        <select name="parte_id"><option value="">—</option>{% for s in partes %}<option value="{{ s.id }}" {{ 'selected' if i.parte_id == s.id }}>{{ s.nome }}</option>{% endfor %}</select></label>
+      <label>Mudança que originou o item
+        <select name="mudanca_id"><option value="">—</option>{% for x in mudancas %}<option value="{{ x.id }}" {{ 'selected' if i.mudanca_id == x.id }}>M-{{ x.codigo }} · {{ x.titulo }} ({{ dict(pmbok.STATUS_MUDANCA)[x.status]|lower }})</option>{% endfor %}</select></label>
+      <label>Risco a que o item responde
+        <select name="risco_id"><option value="">—</option>{% for x in riscos %}<option value="{{ x.id }}" {{ 'selected' if i.risco_id == x.id }}>R-{{ x.codigo }} · {{ x.titulo }}</option>{% endfor %}</select></label>
+    </div>
+  </section>
+
+  <section class="cartao" id="conclusao">
+    <h2>Conclusão e aceite <span class="fonte">seção 2.6.2.2</span></h2>
+    <div class="grade-2">
+      <label>Status {{ m.opcoes('status', pmbok.STATUS_ITEM, status_form) }}</label>
+      <label>Aceito por <span class="ajuda">Quem aceitou a entrega (cliente, product owner, patrocinador)</span><input name="aceito_por" value="{{ i.aceito_por or '' }}"></label>
+    </div>
+    {% if dod %}
+    <fieldset>
+      <legend>Definição de pronto do projeto</legend>
+      <ul class="lista-simples">{% for d in dod %}<li>{{ d }}</li>{% endfor %}</ul>
+      <label class="check"><input type="checkbox" name="dod_ok" value="1" {{ 'checked' if i.dod_ok }}> <strong>Este item atende a todos os critérios acima</strong></label>
+    </fieldset>
+    {% else %}
+    <p class="mudo pequeno">O projeto ainda não tem definição de pronto. Você pode escrevê-la no <a href="{{ url_for('entrega.painel', projeto_id=projeto.id) }}#parametros">painel de entrega</a>.</p>
+    {% endif %}
+  </section>
+
+  <div class="acoes barra-salvar">
+    <button class="botao" type="submit">{{ 'Registrar' if novo else 'Salvar' }}</button>
+    {% if novo %}<button class="botao botao-sec" type="submit" name="acao" value="outro">Registrar e adicionar outro</button>{% endif %}
+    <a class="botao botao-sec" href="{{ url_for('entrega.itens', projeto_id=projeto.id) }}">Cancelar</a>
+  </div>
+</form>
+
+{% if not novo %}
+<section class="cartao">
+  <div class="titulo-secao"><h2>Itens que fazem parte deste</h2>
+    <a class="botao botao-sec" href="{{ url_for('entrega.item_novo', projeto_id=projeto.id, pai=i.id) }}">+ Decompor</a></div>
+  {% if filhos %}<ul class="historico">{% for x in filhos %}<li><a href="{{ url_for('entrega.item', projeto_id=projeto.id, item_id=x.id) }}"><strong>{{ x.rotulo }}</strong> {{ x.titulo }}</a> <span class="selo selo-item-{{ x.status }}">{{ dict(pmbok.STATUS_ITEM)[x.status] }}</span></li>{% endfor %}</ul>
+  {% else %}<p class="mudo">Item sem decomposição: ele conta como trabalho a entregar.</p>{% endif %}
+</section>
+<form method="post" class="cartao perigo">
+  <input type="hidden" name="acao" value="excluir">
+  <p>Se o item saiu do escopo, prefira o status <strong>Cancelado</strong>, que mantém o histórico. Excluir é para registros feitos por engano.</p>
+  <button class="botao botao-perigo" type="submit">Excluir item</button>
+</form>
+{% endif %}
+{% if not novo %}{{ m14.pedir_revisao(projeto, 'item', i.id, i.rotulo ~ ' ' ~ i.titulo) }}{% endif %}
+{% endblock %}

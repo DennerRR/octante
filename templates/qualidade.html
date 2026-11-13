@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Qualidade — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Custo da qualidade</h1>
+<p class="sub">Seção 2.6.3.1. Prevenção e avaliação são o custo da <strong>conformidade</strong>; falhas internas e externas são o custo
+  da <strong>não conformidade</strong>. O objetivo é investir cedo em prevenção para gastar menos com falhas.</p>
+
+<div class="duas-colunas">
+  <section class="cartao">
+    <h2>Resumo</h2>
+    {% set maior = coq.categorias|map(attribute='total')|max %}
+    <table class="tabela barras-h">
+      {% for c in coq.categorias %}
+      <tr><td>{{ c.nome }}<div class="mudo pequeno">{{ 'conformidade' if c.grupo == 'conformidade' else 'não conformidade' }}</div></td>
+        <td class="barra-celula">{% if c.total %}<div class="barra-h barra-{{ c.grupo }}" style="width: {{ (100 * c.total / maior)|round(1) }}%" title="{{ c.nome }}: {{ c.total|moeda }}"></div>{% endif %}</td>
+        <td class="direita">{{ c.total|moeda }}<div class="mudo pequeno">{{ c.n }} registro{{ 's' if c.n != 1 }}</div></td></tr>
+      {% endfor %}
+    </table>
+    <p>Conformidade: <strong>{{ coq.conformidade|moeda }}</strong> · Não conformidade: <strong>{{ coq.nao_conformidade|moeda }}</strong></p>
+    <p>Defeitos resolvidos: <strong>{{ coq.defeitos_resolvidos }}</strong> de {{ coq.defeitos }}</p>
+    <p class="mudo pequeno">Custo da mudança conforme a fase em que o defeito é encontrado (Figura 2-22):
+      {% for fase, x in pmbok.CUSTO_MUDANCA %}{{ fase }} {{ x }}{{ ' · ' if not loop.last }}{% endfor %}.</p>
+  </section>
+  <section class="cartao">
+    <h2>Registrar</h2>
+    <form method="post" class="formulario">
+      <label>Categoria
+        <select name="categoria" required>{% for k, nome, grupo, desc in pmbok.CUSTO_QUALIDADE %}<option value="{{ k }}">{{ nome }} — {{ desc }}</option>{% endfor %}</select></label>
+      <label>Descrição<input name="descricao" required placeholder="Ex.: Retrabalho na tela de agendamento após teste com a recepção"></label>
+      <div class="grade-3">
+        <label>Data<input type="date" name="data" value="{{ hoje }}" max="{{ hoje }}"></label>
+        <label>Custo (R$)<input name="custo" inputmode="decimal"></label>
+        <label>Item relacionado
+          <select name="item_id"><option value="">—</option>{% for i in itens %}<option value="{{ i.id }}">{{ i.rotulo }} · {{ i.titulo }}</option>{% endfor %}</select></label>
+      </div>
+      <div class="acoes"><button class="botao" type="submit">Adicionar registro</button></div>
+    </form>
+  </section>
+</div>
+
+<section class="cartao">
+  <h2>Registros</h2>
+  {% if registros %}
+  <div class="tabela-rolagem">
+  <table class="tabela">
+    <thead><tr><th>Data</th><th>Categoria</th><th>Descrição</th><th>Item</th><th>Custo</th><th>Defeito</th><th></th></tr></thead>
+    <tbody>
+    {% for r in registros %}
+      {% set falha = r.categoria in ('falha_interna', 'falha_externa') %}
+      <tr>
+        <td>{{ r.data|data_br }}</td>
+        <td><span class="selo {{ 'selo-opositor' if falha else 'selo-apoiador' }}">{{ pmbok.CUSTO_QUALIDADE_NOME[r.categoria] }}</span></td>
+        <td>{{ r.descricao }}</td>
+        <td>{% if r.item_id %}<a href="{{ url_for('entrega.item', projeto_id=projeto.id, item_id=r.item_id) }}">I-{{ r.item_codigo }}</a>{% else %}—{% endif %}</td>
+        <td>{{ r.custo|moeda }}</td>
+        <td>{% if falha %}<form method="post"><input type="hidden" name="registro_id" value="{{ r.id }}"><button class="botao-mini" name="acao" value="resolver" type="submit">{{ 'Resolvido ✓' if r.resolvido else 'Marcar como resolvido' }}</button></form>{% else %}<span class="mudo">—</span>{% endif %}</td>
+        <td><form method="post"><input type="hidden" name="registro_id" value="{{ r.id }}"><button class="link-perigo" name="acao" value="excluir" type="submit" title="Remover">✕</button></form></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}<p class="mudo">Nenhum registro. Registre revisões, testes e treinamentos (conformidade) e o retrabalho causado por defeitos (não conformidade).</p>{% endif %}
+</section>
+{% endblock %}

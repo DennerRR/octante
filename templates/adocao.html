@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Mudança organizacional — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Mudança organizacional e adoção</h1>
+<p class="sub">Princípio 12: o projeto só gera valor quando as pessoas adotam o que foi entregue. Isso é diferente do controle de mudanças do
+  projeto: aqui o foco é preparar quem será afetado, do estado atual ao estado futuro, num ritmo que a organização consiga absorver.</p>
+
+<form method="post" class="cartao formulario">
+  <input type="hidden" name="acao" value="estados">
+  <h2>Do estado atual ao estado futuro</h2>
+  <div class="grade-2">
+    <label>Como funciona hoje<textarea name="mudanca_estado_atual" rows="3">{{ projeto.mudanca_estado_atual }}</textarea></label>
+    <label>Como vai funcionar depois<textarea name="mudanca_estado_futuro" rows="3">{{ projeto.mudanca_estado_futuro }}</textarea></label>
+  </div>
+  <div class="acoes"><button class="botao botao-sec" type="submit">Salvar estados</button></div>
+</form>
+
+{% if simultaneas >= 4 %}
+<div class="cartao dica">{{ simultaneas }} grupos estão em transição ao mesmo tempo. Mudanças demais em paralelo geram saturação e resistência (seção 3.12):
+  considere escalonar a adoção.</div>
+{% endif %}
+
+{% for g in grupos %}
+<section class="cartao{{ ' cartao-alerta' if g.risco_resistencia }}" id="g{{ g.id }}">
+  <div class="cabecalho">
+    <h2>{{ g.grupo }}{% if g.parte_nome %} <span class="mudo pequeno">· {{ g.parte_nome }}</span>{% endif %}</h2>
+    <div>
+      {% if g.risco_resistencia %}<span class="selo selo-opositor">risco de resistência</span>{% endif %}
+      <span class="selo selo-status">{{ dict(pmbok.STATUS_ADOCAO)[g.status] }}</span>
+    </div>
+  </div>
+  <div class="duas-colunas">
+    <div>
+      <div class="resumo-linha">
+        <div class="metrica"><span class="metrica-rotulo">Adoção</span><span class="metrica-valor">{{ '%.0f'|format(g.adocao_atual) ~ '%' if g.adocao_atual is not none else '—' }}</span>
+          <span class="mudo pequeno">meta {{ '%.0f'|format(g.meta_adocao) ~ '%' if g.meta_adocao is not none else 'não definida' }}</span></div>
+        <div class="metrica"><span class="metrica-rotulo">Impacto</span><span class="metrica-valor">{{ g.impacto or '—' }}<span class="mudo pequeno"> /5</span></span></div>
+        <div class="metrica"><span class="metrica-rotulo">Prontidão</span><span class="metrica-valor">{{ g.prontidao or '—' }}<span class="mudo pequeno"> /5</span></span></div>
+      </div>
+    </div>
+    <div>{% if g.grafico %}{{ m.grafico(g.grafico) }}{% else %}<p class="mudo">Registre duas ou mais medições para ver a curva de adoção.</p>{% endif %}</div>
+  </div>
+
+  <details>
+    <summary>Editar plano do grupo</summary>
+    <form method="post" class="formulario">
+      <input type="hidden" name="grupo_id" value="{{ g.id }}">
+      <div class="grade-2">
+        <label>Grupo afetado<input name="grupo" required value="{{ g.grupo }}"></label>
+        <label>Parte interessada {{ m.opcoes('parte_id', partes, g.parte_id, vazio='—') }}</label>
+      </div>
+      <label>O que muda para o grupo<textarea name="o_que_muda" rows="2">{{ g.o_que_muda }}</textarea></label>
+      <div class="grade-4">
+        <label>Impacto (1–5) {{ m.escala('impacto', g.impacto, aria='Impacto') }}</label>
+        <label>Prontidão (1–5) {{ m.escala('prontidao', g.prontidao, aria='Prontidão') }}</label>
+        <label>Meta de adoção (%)<input name="meta_adocao" inputmode="decimal" value="{{ '%g'|format(g.meta_adocao) if g.meta_adocao is not none }}"></label>
+        <label>Status {{ m.opcoes('status', pmbok.STATUS_ADOCAO, g.status) }}</label>
+      </div>
+      <label>Resistências esperadas<textarea name="resistencias" rows="2">{{ g.resistencias }}</textarea></label>
+      <label>Ações de comunicação, treinamento e apoio<textarea name="acoes" rows="2">{{ g.acoes }}</textarea></label>
+      <div class="acoes">
+        <button class="botao botao-sec" type="submit">Salvar grupo</button>
+        <button class="link-perigo" type="submit" name="acao" value="excluir">✕ remover</button>
+      </div>
+    </form>
+  </details>
+
+  <form method="post" class="formulario linha-medicao">
+    <input type="hidden" name="grupo_id" value="{{ g.id }}"><input type="hidden" name="acao" value="medir">
+    <div class="grade-5">
+      <label>Data<input type="date" name="data" value="{{ hoje }}" max="{{ hoje }}"></label>
+      <label>Adoção (%)<input name="adocao" inputmode="decimal" required></label>
+      <label>Prontidão {{ m.escala('prontidao', None, aria='Prontidão nesta medição') }}</label>
+      <label>Observação<input name="nota"></label>
+      <div class="acoes"><button class="botao botao-sec" type="submit">Registrar medição</button></div>
+    </div>
+  </form>
+</section>
+{% endfor %}
+
+<form method="post" class="cartao formulario destaque">
+  <h2>Novo grupo afetado</h2>
+  <div class="grade-2">
+    <label>Grupo afetado<input name="grupo" required placeholder="Ex.: Recepcionistas"></label>
+    <label>Parte interessada {{ m.opcoes('parte_id', partes, None, vazio='—') }}</label>
+  </div>
+  <label>O que muda para o grupo<textarea name="o_que_muda" rows="2"></textarea></label>
+  <div class="grade-3">
+    <label>Impacto (1–5) {{ m.escala('impacto', None, aria='Impacto') }}</label>
+    <label>Prontidão (1–5) {{ m.escala('prontidao', None, aria='Prontidão') }}</label>
+    <label>Meta de adoção (%)<input name="meta_adocao" inputmode="decimal" placeholder="Ex.: 90"></label>
+  </div>
+  <label>Ações de comunicação, treinamento e apoio<textarea name="acoes" rows="2"></textarea></label>
+  <div class="acoes"><button class="botao" type="submit">Registrar grupo</button></div>
+</form>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Tailoring — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Tailoring</h1>
+<p class="sub">Guia, seção 3: adaptar deliberadamente a abordagem, a governança e os processos ao contexto, com “apenas o suficiente” de processo.
+  O processo tem quatro passos: escolher a abordagem inicial, adaptar para a organização, adaptar para o projeto e melhorar continuamente.</p>
+
+<section class="cartao">
+  <h2>Diagnóstico <span class="fonte">Tabela 3-1</span></h2>
+  <p class="mudo pequeno">Situações comuns detectadas nos registros do projeto e as sugestões de tailoring do guia.</p>
+  {% if diagnostico %}
+  <div class="tabela-rolagem"><table class="tabela">
+    <thead><tr><th>Situação</th><th>Sugestão de tailoring</th><th></th></tr></thead>
+    <tbody>{% for d in diagnostico %}<tr><td>{{ d.situacao }}</td><td>{{ d.sugestao }}</td>
+      <td><form method="post"><input type="hidden" name="acao" value="decisao"><input type="hidden" name="tipo" value="ajustar">
+        <input type="hidden" name="elemento" value="{{ d.sugestao }}"><input type="hidden" name="motivo" value="{{ d.situacao }}"><input type="hidden" name="origem" value="Diagnóstico (Tabela 3-1)">
+        <button class="botao-mini" type="submit">Adotar</button></form></td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<p>Nenhuma das situações da Tabela 3-1 foi detectada. Retrospectivas e lições aprendidas continuam sendo a melhor fonte de ajustes (3.6).</p>{% endif %}
+</section>
+
+<div class="duas-colunas">
+  <form method="post" class="cartao formulario">
+    <input type="hidden" name="acao" value="decisao">
+    <h2>Registrar decisão</h2>
+    <p class="mudo pequeno">O que a equipe adicionou, removeu ou ajustou em processos, métodos, artefatos, ferramentas ou engajamento, e por quê (Figura 3-6).</p>
+    <label>Tipo {{ m.opcoes('tipo', pmbok.TIPOS_DECISAO_TAILORING, 'ajustar') }}</label>
+    <label>O que mudou<input name="elemento" required placeholder="Ex.: removido o relatório semanal; a demo quinzenal substitui"></label>
+    <label>Motivo<input name="motivo"></label>
+    <label>Origem<input name="origem" placeholder="Ex.: retrospectiva da sprint 3, exigência da organização"></label>
+    <div class="acoes"><button class="botao" type="submit">Registrar</button></div>
+  </form>
+  <section class="cartao">
+    <h2>Decisões registradas</h2>
+    {% if decisoes %}
+    <ul class="historico">{% for x in decisoes %}<li><span class="selo">{{ dict(pmbok.TIPOS_DECISAO_TAILORING)[x.tipo] }}</span> {{ x.elemento }}
+      <div class="mudo pequeno">{{ x.data|data_br }}{% if x.motivo %} · {{ x.motivo }}{% endif %}{% if x.origem %} · {{ x.origem }}{% endif %}</div>
+      <form method="post"><input type="hidden" name="acao" value="excluir"><input type="hidden" name="decisao_id" value="{{ x.id }}"><button class="link-perigo pequeno" type="submit">remover</button></form></li>{% endfor %}</ul>
+    {% else %}<p class="mudo">Nenhuma decisão registrada. A escolha da abordagem fica na página <a href="{{ url_for('abordagem', projeto_id=projeto.id) }}">Abordagem</a>.</p>{% endif %}
+  </section>
+</div>
+
+<form method="post" class="cartao formulario">
+  <input type="hidden" name="acao" value="respostas">
+  <h2>Contexto do projeto <span class="fonte">3.4.3</span></h2>
+  <p class="mudo pequeno">Responder a estas perguntas ajuda a decidir o que adicionar, remover ou ajustar.</p>
+  {% for grupo in ['Produto', 'Equipe', 'Cultura'] %}
+  <h3 class="espaco">{{ grupo }}</h3>
+  <div class="grade-2">
+    {% for g, k, nome, pergunta in pmbok.PERGUNTAS_TAILORING if g == grupo %}
+    <label>{{ nome }} <span class="ajuda">{{ pergunta }}</span><input name="{{ k }}" value="{{ respostas.get(k, '') }}"></label>
+    {% endfor %}
+  </div>
+  {% endfor %}
+  <div class="acoes"><button class="botao" type="submit">Salvar respostas</button></div>
+</form>
+{% endblock %}

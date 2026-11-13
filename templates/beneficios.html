@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Benefícios — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<h1>Benefícios e valor</h1>
+<p class="sub">Seção 2.6.1. O projeto existe para gerar resultados para o negócio. Registre os benefícios esperados, como serão medidos
+  e quando devem acontecer; alguns só aparecem depois do fim do projeto.</p>
+
+{% for b in beneficios %}
+<form method="post" action="{{ url_for('entrega.beneficio', projeto_id=projeto.id, beneficio_id=b.id) }}" class="cartao formulario">
+  <div class="grade-2">
+    <label>Benefício<input name="descricao" required value="{{ b.descricao }}"></label>
+    <label>Como será medido<input name="medida" value="{{ b.medida }}"></label>
+  </div>
+  <div class="grade-4">
+    <label>Meta<input name="meta" value="{{ b.meta }}"></label>
+    <label>Data prevista<input type="date" name="data_prevista" value="{{ b.data_prevista or '' }}"></label>
+    <label>Status {{ m.opcoes('status', pmbok.STATUS_BENEFICIO, b.status) }}</label>
+    <label>Resultado medido<input name="resultado" value="{{ b.resultado }}" placeholder="Obrigatório ao realizar"></label>
+  </div>
+  <div class="acoes">
+    <button class="botao botao-sec" type="submit">Salvar</button>
+    <button class="link-perigo" type="submit" name="acao" value="excluir" title="Remover">✕ remover</button>
+    {% if b.status in ('planejado', 'parcial') and b.data_prevista and b.data_prevista < hoje %}<span class="selo selo-opositor">passou da data prevista</span>{% endif %}
+  </div>
+</form>
+{% endfor %}
+
+<form method="post" class="cartao formulario destaque">
+  <h2>Novo benefício esperado</h2>
+  <div class="grade-2">
+    <label>Benefício<input name="descricao" required placeholder="Ex.: Menos ligações para a recepção"></label>
+    <label>Como será medido<input name="medida" placeholder="Ex.: ligações de agendamento por semana"></label>
+  </div>
+  <div class="grade-2">
+    <label>Meta<input name="meta" placeholder="Ex.: reduzir 40%"></label>
+    <label>Data prevista<input type="date" name="data_prevista"></label>
+  </div>
+  <div class="acoes"><button class="botao" type="submit">Registrar benefício</button></div>
+</form>
+{% endblock %}

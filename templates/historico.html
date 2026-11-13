@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block titulo %}Histórico — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<div class="cabecalho">
+  <div><h1>Histórico de alterações</h1>
+  <p class="sub">Quem criou, alterou ou excluiu cada registro deste projeto, e quando. As 300 alterações mais recentes.</p></div>
+  <form method="get" class="linha-form">
+    <select name="tipo" data-enviar-ao-mudar aria-label="Filtrar por tipo">
+      <option value="">Todos os tipos</option>
+      {% for t, nome in tipos %}<option value="{{ t }}" {{ 'selected' if t == tipo }}>{{ nome }}</option>{% endfor %}
+    </select>
+  </form>
+</div>
+<section class="cartao">
+{% if eventos %}
+  <ol class="linha-tempo">
+  {% for e in eventos %}
+    <li class="evento evento-{{ e.acao }}">
+      <span class="evento-icone" aria-hidden="true">{{ {'I': '+', 'U': '✎', 'D': '×'}[e.acao] }}</span>
+      <div>
+        <strong>{{ e.quem }}</strong> {{ e.acao_texto }} <span class="selo">{{ e.tipo }}</span> {{ e.registro }}
+        {% if e.campos %}<div class="pequeno mudo">Campos: {{ e.campos[:8]|join(', ') }}{% if e.campos|length > 8 %}…{% endif %}</div>{% endif %}
+      </div>
+      <time class="pequeno mudo">{{ e.quando[:16]|replace('T', ' ') }}</time>
+    </li>
+  {% endfor %}
+  </ol>
+{% else %}
+  <p class="mudo">Nenhuma alteração registrada ainda. O histórico começa a contar a partir da versão 13 do app.</p>
+{% endif %}
+</section>
+{% endblock %}

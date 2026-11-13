@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block titulo %}Primeiro acesso — Octante{% endblock %}
+{% block conteudo %}
+<section class="cartao caixa-login">
+  <img class="logo-entrada" src="{{ url_for('static', filename='marca/octante-logo.svg') }}" alt="Octante: gestão de projetos">
+  <h1>Primeiro acesso</h1>
+  <p>Crie a conta do <strong>administrador</strong>. Depois você cadastra as outras pessoas (por exemplo, os estagiários) em “Usuários”.</p>
+  {% if erro %}<p class="aviso-erro">{{ erro }}</p>{% endif %}
+  <form method="post">
+    <label>Seu nome <input name="nome" required autofocus></label>
+    <label>Usuário (para entrar) <input name="login" autocomplete="username" required></label>
+    <label>Senha (mínimo 8 caracteres) <input type="password" name="senha" autocomplete="new-password" minlength="8" required></label>
+    <label>Repita a senha <input type="password" name="confirmacao" autocomplete="new-password" minlength="8" required></label>
+    <button class="botao" type="submit">Criar administrador</button>
+  </form>
+</section>
+{% endblock %}

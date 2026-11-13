@@ -1,0 +1,9 @@
+instance/
+__pycache__/
+.venv/
+.pytest_cache/
+*.db
+*.db-journal
+*.sqlite3
+.env
+*.zip

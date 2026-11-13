@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block titulo %}Revisões do PMO — Octante{% endblock %}
+{% block conteudo %}
+<h1>Revisões do PMO</h1>
+<p class="sub">Registros que a equipe pediu para o PMO conferir. Aprove ou devolva com um comentário que ensine o que ajustar.</p>
+<section class="cartao">
+  <h2>Aguardando revisão ({{ pendentes|length }})</h2>
+  {% for r in pendentes %}
+  <div class="cartao destaque">
+    <div class="titulo-secao"><div><strong>{{ r.titulo }}</strong> <span class="selo">{{ r.projeto }}</span>
+      <div class="pequeno mudo">Pedido por {{ r.solicitado_por or '—' }} em {{ r.solicitado_em[:16] }}</div></div>
+      {% if r.link %}<a class="botao botao-sec" href="{{ r.link }}">Abrir registro</a>{% endif %}</div>
+    {% if r.mensagem %}<p>“{{ r.mensagem }}”</p>{% endif %}
+    <form method="post" class="grade-form">
+      <input type="hidden" name="revisao_id" value="{{ r.id }}">
+      <label>Comentário <textarea name="comentario" rows="2" placeholder="Ex.: Ótimo! Só detalhe o gatilho do risco para sabermos quando agir."></textarea></label>
+      <div class="acoes"><button class="botao" name="decisao" value="aprovada" type="submit">Aprovar</button>
+        <button class="botao botao-sec" name="decisao" value="devolvida" type="submit">Devolver para ajuste</button></div>
+    </form>
+  </div>
+  {% else %}<p class="mudo">Nenhum pedido pendente.</p>{% endfor %}
+</section>
+{% if recentes %}
+<section class="cartao"><h2>Decididas recentemente</h2>
+<table><thead><tr><th>Registro</th><th>Projeto</th><th>Decisão</th><th>Comentário</th><th>Quando</th></tr></thead><tbody>
+{% for r in recentes %}<tr><td>{{ r.titulo }}</td><td>{{ r.projeto }}</td><td>{{ r.status }}</td><td class="pequeno">{{ r.comentario }}</td><td class="pequeno">{{ (r.decidido_em or '')[:16] }}</td></tr>{% endfor %}
+</tbody></table></section>
+{% endif %}
+{% endblock %}

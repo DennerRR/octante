@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block titulo %}{{ d.nome }} — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+{% set rota_modulo = {'partes': 'partes_registro', 'abordagem': 'abordagem', 'abertura': 'abertura', 'incerteza': 'incerteza.painel', 'trabalho': 'trabalho.painel', 'entrega': 'entrega.painel', 'medicao': 'medicao.painel', 'equipe': 'equipe.membros'} %}
+<p><a href="{{ url_for('dominios', projeto_id=projeto.id) }}">← Todos os domínios</a></p>
+<div class="cabecalho">
+  <div>
+    <h1>{{ d.secao }} Domínio de desempenho: {{ d.nome }}</h1>
+    <p class="sub">{{ d.resumo }}</p>
+  </div>
+  <div>
+  {% if d.chave == 'trabalho' %}<a class="botao botao-sec" href="{{ url_for('suprimentos.painel', projeto_id=projeto.id) }}">Aquisições e recursos físicos</a>{% endif %}
+  {% if d.modulo %}<a class="botao" href="{{ url_for(rota_modulo[d.modulo], projeto_id=projeto.id) }}">Abrir módulo</a>{% endif %}
+</div>
+</div>
+
+{% if not d.modulo %}
+<div class="cartao dica">Este domínio ainda não tem módulo próprio no app (previsto para as próximas versões).
+  Você já pode usar a verificação de resultados abaixo para acompanhá-lo.</div>
+{% endif %}
+
+{% if indicadores %}
+<section class="cartao destaque">
+  <h3>Evidências calculadas pelo app</h3>
+  <ul>{% for i in indicadores %}<li>{{ i }}</li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+<form method="post">
+  <section class="cartao">
+    <h2>Verificação de resultados <span class="fonte">Tabela {{ d.tabela }}</span></h2>
+    {% for it in itens %}
+    <div class="verificacao verificacao-{{ it.status }}">
+      <div class="verificacao-texto">
+        <div class="verificacao-resultado">{{ it.resultado }}</div>
+        <div class="mudo"><strong>Como verificar:</strong> {{ it.verificacao }}</div>
+      </div>
+      <div class="verificacao-campos formulario">
+        <div class="segmentado">
+          {% for k, v in pmbok.STATUS_VERIFICACAO %}
+          <label class="seg seg-{{ k }}"><input type="radio" name="status_{{ it.i }}" value="{{ k }}" {{ 'checked' if it.status == k }}><span>{{ v }}</span></label>
+          {% endfor %}
+        </div>
+        <label>Evidência / observação
+          <textarea name="evidencia_{{ it.i }}" rows="2">{{ it.evidencia }}</textarea>
+        </label>
+        {% if it.atualizado_em %}<span class="mudo pequeno">Atualizado em {{ it.atualizado_em|data_br }}</span>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+    <div class="acoes"><button class="botao" type="submit">Salvar verificação</button></div>
+  </section>
+</form>
+{% endblock %}

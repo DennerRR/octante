@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Incerteza — {{ projeto.nome }}{% endblock %}
+{% block conteudo %}
+<div class="cabecalho">
+  <div>
+    <h1>Incerteza e riscos</h1>
+    <p class="sub">Domínio de desempenho 2.8. Riscos são um aspecto da incerteza: eventos ou condições incertas que, se ocorrerem,
+      afetam os objetivos de forma negativa (<strong>ameaças</strong>) ou positiva (<strong>oportunidades</strong>).</p>
+  </div>
+  <a class="botao" href="{{ url_for('incerteza.risco_novo', projeto_id=projeto.id) }}">+ Registrar risco</a>
+</div>
+
+{% if projeto.abordagem %}
+<div class="cartao dica"><strong>Tailoring ({{ dict(pmbok.ABORDAGENS)[projeto.abordagem] }}):</strong> {{ pmbok.TAILORING[projeto.abordagem].incerteza }}</div>
+{% endif %}
+
+<div class="resumo-linha">
+  <a class="metrica" href="{{ url_for('incerteza.riscos', projeto_id=projeto.id, tipo='ameaca') }}">
+    <span class="metrica-rotulo">Ameaças ativas</span>
+    <span class="metrica-valor">{{ resumo.ameacas }}{% if resumo.altos %} <span class="selo selo-opositor">{{ resumo.altos }} acima do limite</span>{% endif %}</span>
+  </a>
+  <a class="metrica" href="{{ url_for('incerteza.riscos', projeto_id=projeto.id, tipo='oportunidade') }}">
+    <span class="metrica-rotulo">Oportunidades ativas</span>
+    <span class="metrica-valor">{{ resumo.oportunidades }}</span>
+  </a>
+  <div class="metrica">
+    <span class="metrica-rotulo">EMV das ameaças</span>
+    <span class="metrica-valor pequeno">{{ resumo.emv_ameacas|moeda if resumo.tem_emv else '—' }}</span>
+  </div>
+  <div class="metrica">
+    <span class="metrica-rotulo">Reserva de contingência</span>
+    <span class="metrica-valor pequeno">{{ resumo.contingencia_custo|moeda }}{% if resumo.contingencia_prazo %} · {{ resumo.contingencia_prazo }} dias{% endif %}</span>
+    {% if resumo.contingencia_usada %}<span class="mudo pequeno">usada: {{ resumo.contingencia_usada|moeda }}</span>{% endif %}
+  </div>
+  <div class="metrica">
+    <span class="metrica-rotulo">Reserva de gerenciamento</span>
+    <span class="metrica-valor pequeno">{{ resumo.gerenciamento|moeda }}</span>
+    {% if resumo.gerenciamento_usado %}<span class="mudo pequeno">usada: {{ resumo.gerenciamento_usado|moeda }}</span>{% endif %}
+  </div>
+</div>
+
+<section class="cartao">
+  <h2>Matrizes de probabilidade e impacto <span class="fonte">riscos ativos</span></h2>
+  <div class="duas-colunas">
+    {{ m.matriz_risco(matriz_ameacas, 'Ameaças', projeto) }}
+    {{ m.matriz_risco(matriz_oport, 'Oportunidades', projeto) }}
+  </div>
+  <div class="legenda">
+    <span><i class="quadrado mc-alto"></i>Alto (≥ {{ projeto.limite_risco }})</span>
+    <span><i class="quadrado mc-medio"></i>Médio</span>
+    <span><i class="quadrado mc-baixo"></i>Baixo</span>
+  </div>
+  <p class="mudo pequeno">Pontuação = probabilidade × impacto. Os níveis seguem o limite de risco definido abaixo.</p>
+</section>
+
+<div class="duas-colunas">
+  <section class="cartao">
+    <h2>Pontos de atenção</h2>
+    {% if alertas %}
+    <ul class="alertas">{% for a in alertas %}<li class="alerta alerta-{{ a.nivel }}"><a href="{{ a.link }}">{{ a.texto }}</a></li>{% endfor %}</ul>
+    {% else %}<p class="mudo">Nada a destacar.</p>{% endif %}
+    {% if resumo.tem_emv and resumo.contingencia_custo < -resumo.emv_ameacas %}
+    <p class="aviso-texto">A reserva de contingência ({{ resumo.contingencia_custo|moeda }}) é menor que o valor monetário esperado das ameaças
+      ({{ (-resumo.emv_ameacas)|moeda }}). Avalie se a reserva é suficiente.</p>
+    {% endif %}
+  </section>
+
+  <form method="post" class="cartao formulario" id="global">
+    <h2>Limites, reservas e risco global</h2>
+    <div class="grade-2">
+      <label><span>Limite de risco <span class="mudo">(P×I, 1–25)</span></span>
+        <input type="number" name="limite_risco" min="1" max="25" value="{{ projeto.limite_risco }}">
+        <span class="ajuda">Ameaças com pontuação igual ou maior exigem resposta ativa.</span>
+      </label>
+      <label><span>Cadência de revisão <span class="mudo">(dias)</span></span>
+        <input type="number" name="revisao_risco_dias" min="1" max="365" value="{{ projeto.revisao_risco_dias }}">
+        <span class="ajuda">Ex.: 14 para revisar a cada sprint de duas semanas.</span>
+      </label>
+    </div>
+    <label>Apetite a risco
+      <span class="ajuda">Quanta variação nos objetivos a organização e as partes interessadas aceitam (seção 2.8.5).</span>
+      <textarea name="apetite_risco" rows="2" placeholder="Ex.: aceitamos até 10% de atraso no MVP, mas nenhum risco à conformidade com a LGPD.">{{ projeto.apetite_risco or '' }}</textarea>
+    </label>
+    <label>Reserva de gerenciamento (R$)
+      <span class="ajuda">Para eventos desconhecidos, como trabalho não planejado dentro do escopo. A contingência é a soma das reservas de cada ameaça.</span>
+      <input name="reserva_gerenciamento" inputmode="decimal" value="{{ ('%.2f'|format(projeto.reserva_gerenciamento)).replace('.', ',') if projeto.reserva_gerenciamento is not none else '' }}">
+    </label>
+    <fieldset>
+      <legend>Risco global do projeto</legend>
+      <p class="mudo pequeno">Efeito da incerteza sobre o projeto como um todo, geralmente função de complexidade, ambiguidade e volatilidade.</p>
+      <div class="opcoes-abordagem">
+        {% for k, v in pmbok.RISCO_GLOBAL %}
+        <label class="check"><input type="radio" name="risco_global" value="{{ k }}" {{ 'checked' if projeto.risco_global == k }}> {{ v }}</label>
+        {% endfor %}
+      </div>
+      <label>Justificativa
+        <textarea name="risco_global_notas" rows="2">{{ projeto.risco_global_notas or '' }}</textarea>
+      </label>
+    </fieldset>
+    <div class="acoes"><button class="botao" type="submit">Salvar</button></div>
+  </form>
+</div>
+{% endblock %}

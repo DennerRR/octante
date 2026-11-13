@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as m with context %}
+{% block titulo %}Medição — {{ projeto.nome }}{% endblock %}
+{% macro idx(v) -%}{{ ('%.2f'|format(v)).replace('.', ',') if v is number else '—' }}{%- endmacro %}
+{% block conteudo %}
+<h1>Painel de desempenho</h1>
+<p class="sub">Domínio de desempenho 2.7. O valor das medições está nas conversas e decisões que elas provocam, não em coletar dados.
+  Cada número abaixo é calculado a partir do que foi registrado nos outros módulos.</p>
+{% if projeto.abordagem %}<div class="cartao dica"><strong>Tailoring ({{ dict(pmbok.ABORDAGENS)[projeto.abordagem] }}):</strong> {{ pmbok.TAILORING[projeto.abordagem].medicao }}</div>{% endif %}
+
+<section class="cartao">
+  <h2>Situação por dimensão <span class="fonte">painel com semáforo, 2.7.3.1</span></h2>
+  {{ m.semaforo(semaforo) }}
+  <p class="mudo pequeno">Limite de variação: {{ projeto.limite_variacao }}%. Índices abaixo de {{ ('%.2f'|format(1 - projeto.limite_variacao / 100)).replace('.', ',') }} ficam em atenção e abaixo de {{ ('%.2f'|format(1 - 2 * projeto.limite_variacao / 100)).replace('.', ',') }}, críticos.</p>
+</section>
+
+{% if alertas %}
+<section class="cartao"><h2>Pontos de atenção</h2>
+  <ul class="alertas">{% for a in alertas %}<li class="alerta alerta-{{ a.nivel }}"><a href="{{ a.link }}">{{ a.texto }}</a></li>{% endfor %}</ul></section>
+{% endif %}
+
+<div class="duas-colunas">
+  <section class="cartao">
+    <h2>Burnup <span class="fonte">2.7.3.3</span></h2>
+    {% if burnup %}
+    <p class="mudo pequeno">Trabalho concluído comparado ao escopo total, em {{ burnup.unidade }}. Quando o escopo sobe, o fim se afasta.</p>
+    {{ m.grafico(burnup) }}
+    {% else %}<p class="mudo">Registre itens de escopo para ver o burnup.</p>{% endif %}
+  </section>
+  <section class="cartao">
+    <h2>Previsão e fluxo <span class="fonte">2.7.2.2 e 2.7.2.7</span></h2>
+    {% if prev.data %}
+    <p class="destaque-numero">{{ prev.data.strftime('%d/%m/%Y') }}</p>
+    <p>Término provável do escopo restante ({{ '%g'|format(prev.restante) }} {{ prev.unidade }}), pela {{ prev.metodo }}.
+      {% if projeto.data_fim_planejada %}Término planejado: <strong>{{ projeto.data_fim_planejada|data_br }}</strong>.{% endif %}</p>
+    {% elif prev.restante == 0 and burnup %}<p>Todo o escopo registrado está concluído.</p>
+    {% else %}<p class="mudo">Ainda não há ritmo de entrega suficiente para prever o término (é preciso concluir itens ou encerrar iterações).</p>{% endif %}
+    <table class="tabela tabela-compacta">
+      <tr><td>Trabalho em andamento (WIP)</td><td class="direita">{{ fluxo.wip }}</td></tr>
+      <tr><td>Itens na fila (a fazer)</td><td class="direita">{{ fluxo.fila }}</td></tr>
+      <tr><td>Lead time médio <span class="mudo pequeno">(entrada no backlog → conclusão)</span></td><td class="direita">{{ ('%.1f'|format(fluxo.lead)).replace('.', ',') ~ ' dias' if fluxo.lead is not none else '—' }}</td></tr>
+      <tr><td>Cycle time médio <span class="mudo pequeno">(início → conclusão)</span></td><td class="direita">{{ ('%.1f'|format(fluxo.ciclo)).replace('.', ',') ~ ' dias' if fluxo.ciclo is not none else '—' }}</td></tr>
+      <tr><td>Vazão nos últimos 30 dias</td><td class="direita">{{ fluxo.vazao30 }} itens</td></tr>
+    </table>
+    <p class="mudo pequeno">Tempos dos itens concluídos nos últimos 90 dias.</p>
+  </section>
+</div>
+
+<section class="cartao">
+  <h2>Velocidade por iteração</h2>
+  {% if vel %}
+  <p class="mudo pequeno">Trabalho planejado e concluído em cada iteração, em {{ vel.unidade }}.
+    {% if vel.media %}Média das últimas iterações encerradas: <strong>{{ ('%.1f'|format(vel.media)).replace('.', ',') }} {{ vel.unidade }}</strong>.{% endif %}</p>
+  {{ m.grafico(vel.grafico) }}
+  {% else %}<p class="mudo">Nenhuma iteração cadastrada. Projetos adaptativos podem criar iterações em <a href="{{ url_for('medicao.cronograma', projeto_id=projeto.id) }}">Cronograma e orçamento</a>.</p>{% endif %}
+</section>
+
+<section class="cartao">
+  <h2>Valor agregado <span class="fonte">2.7.2.3 e 2.7.2.7</span></h2>
+  {% if va %}
+  <div class="evm">
+    <div><span class="metrica-rotulo">Orçamento no término (ONT)</span><span class="metrica-valor pequeno">{{ va.onp|moeda }}</span></div>
+    <div><span class="metrica-rotulo">Valor planejado (VP)</span><span class="metrica-valor pequeno">{{ va.vp|moeda }}</span></div>
+    <div><span class="metrica-rotulo">Valor agregado (VA)</span><span class="metrica-valor pequeno">{{ va.va|moeda }}</span></div>
+    <div><span class="metrica-rotulo">Custo real (CR)</span><span class="metrica-valor pequeno">{{ va.cr|moeda }}</span></div>
+    <div><span class="metrica-rotulo">Índice de desempenho de prazo (IDP)</span><span class="metrica-valor">{{ idx(va.idp) }}</span><span class="mudo pequeno">variação de prazo {{ va.vprazo|moeda }}</span></div>
+    <div><span class="metrica-rotulo">Índice de desempenho de custo (IDC)</span><span class="metrica-valor">{{ idx(va.idc) }}</span><span class="mudo pequeno">variação de custo {{ va.vcusto|moeda }}</span></div>
+    <div><span class="metrica-rotulo">Estimativa no término (ENT)</span><span class="metrica-valor pequeno">{{ va.ent|moeda }}</span><span class="mudo pequeno">variação no término {{ va.vnt|moeda }}</span></div>
+    <div><span class="metrica-rotulo">Estimativa para terminar (EPT)</span><span class="metrica-valor pequeno">{{ va.ept|moeda }}</span><span class="mudo pequeno">IDPT {{ idx(va.idpt) }}</span></div>
+  </div>
+  {% if curva %}{{ m.grafico(curva) }}{% endif %}
+  <p class="mudo pequeno">Regra 0/100: o item só agrega valor quando concluído. VP distribui o custo planejado de cada item entre suas datas planejadas;
+    quando há linha de base do escopo, usam-se os valores dela. ENT = ONT ÷ IDC; EPT = ENT − CR; IDPT = (ONT − VA) ÷ (ONT − CR).
+    {% if va.sem_datas %}{{ va.sem_datas }} item(ns) com custo planejado e sem datas ficam fora do VP.{% endif %}</p>
+  {% else %}
+  <p class="mudo">Informe o custo planejado (e, de preferência, as datas planejadas) dos itens em
+    <a href="{{ url_for('medicao.cronograma', projeto_id=projeto.id) }}">Cronograma e orçamento</a> para calcular o valor agregado.
+    As previsões de valor agregado são usadas principalmente em ambientes preditivos.</p>
+  {% endif %}
+</section>
+
+<form method="post" class="cartao formulario" id="excecao">
+  <h2>Limites e plano de exceção <span class="fonte">2.7.5</span></h2>
+  <p class="mudo">Um plano de exceção é o conjunto de ações combinadas para quando um limite for ultrapassado, ou houver previsão de que será.
+    Pode ser simples, como convocar uma reunião com as partes interessadas.</p>
+  <label><span>Limite de variação <span class="mudo">(%, de 1 a 50)</span></span><input type="number" name="limite_variacao" min="1" max="50" value="{{ projeto.limite_variacao }}"></label>
+  <label>Plano de exceção<textarea name="plano_excecao" rows="3" placeholder="Ex.: se prazo ou custo ficarem críticos, reunião com a patrocinadora em até 3 dias para decidir entre reduzir escopo, adiar a release ou usar a reserva.">{{ projeto.plano_excecao or '' }}</textarea></label>
+  <div class="acoes"><button class="botao" type="submit">Salvar</button></div>
+</form>
+{% endblock %}
