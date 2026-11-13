@@ -3,6 +3,16 @@
 Aplicação web local para gerenciar projetos seguindo o **PMBOK® Guide 7ª edição**: 12 princípios,
 8 domínios de desempenho e *tailoring* da abordagem (preditiva, híbrida ou adaptativa).
 
+Feito para quem está começando num PMO: cada tela explica o conceito do PMBOK que está sendo aplicado e mostra o
+que falta preencher.
+
+## Sobre o projeto
+
+Idealizado e conduzido por **Denner Ramiro Ribeiro**, que atuou como dono do produto: definiu o público, os
+requisitos e as regras de negócio, priorizou o que entrava em cada versão e validou cada entrega. A implementação
+foi feita com o apoio do Claude (IA da Anthropic). O produto passou por 18 versões, com 149 testes automatizados
+rodando no GitHub Actions.
+
 ## Publicar na internet
 
 Veja **DEPLOY.md** (PythonAnywhere, grátis). O app pede login; o primeiro acesso cria o administrador.
