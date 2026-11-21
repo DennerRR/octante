@@ -1,344 +1,248 @@
-# Octante
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="static/marca/octante-logo-negativo.svg">
+    <img src="static/marca/octante-logo.svg" alt="Octante" width="304">
+  </picture>
+</h1>
 
-Aplicação web local para gerenciar projetos seguindo o **PMBOK® Guide 7ª edição**: 12 princípios,
-8 domínios de desempenho e *tailoring* da abordagem (preditiva, híbrida ou adaptativa).
+[![testes](https://github.com/DennerRR/octante/actions/workflows/testes.yml/badge.svg?branch=develop)](https://github.com/DennerRR/octante/actions/workflows/testes.yml)
 
-Feito para quem está começando num PMO: cada tela explica o conceito do PMBOK que está sendo aplicado e mostra o
-que falta preencher.
+Sistema web para o PMO conduzir os seus projetos reais com base no **PMBOK® Guide – Sétima Edição**. O ensino vem junto com o uso: cada tela explica o conceito do PMBOK que está sendo aplicado e mostra o que falta preencher.
 
-## Sobre o projeto
+O nome vem do octante, instrumento de navegação que mede ângulos com 1/8 de círculo: orientar o rumo do projeto, medir o desempenho e os 8 domínios de desempenho do PMBOK 7.
 
-Idealizado e conduzido por **Denner Ramiro Ribeiro**, que atuou como dono do produto: definiu o público, os
-requisitos e as regras de negócio, priorizou o que entrava em cada versão e validou cada entrega. A implementação
-foi feita com o apoio do Claude (IA da Anthropic). O produto passou por 18 versões, com 149 testes automatizados
-rodando no GitHub Actions.
+> **Situação em novembro de 2026:** o código deste repositório é um **protótipo feito com vibe coding**. Os requisitos estão sendo especificados agora, e o protótipo ainda não segue as decisões já tomadas. Veja a [situação do projeto](#situação-do-projeto).
 
-## Publicar na internet
+## Para quem é
 
-Veja **DEPLOY.md** (PythonAnywhere, grátis). O app pede login; o primeiro acesso cria o administrador.
+- **PMO** de 1 a 3 supervisores e até uns 15 gerentes de projetos. Cada gerente de projetos conduz de 1 a 3 projetos, e um projeto tem no máximo dois: o gerente do projeto e um gerente de apoio.
+- **Projetos** reais, na maioria internos de TI e de melhoria de processos, em abordagem híbrida.
+- **Quem entra no sistema:** só os gerentes de projetos e os supervisores. Patrocinador, cliente e equipe recebem os documentos gerados, sem login.
 
-## Como rodar
+| Papel | O que faz |
+|---|---|
+| Gerente do projeto | Conduz o projeto e responde por ele ao supervisor. Em geral, tem conhecimento de nível inicial. |
+| Gerente de apoio | Opcional. Trabalha no projeto com os mesmos poderes de edição, sem responder por ele. |
+| Supervisor designado | Cria o projeto e revisa o que o gerente do projeto envia, como o termo de abertura, o relatório de status, as mudanças e o encerramento. Outro supervisor pode substituí-lo. |
+| Administrador | Papel extra de um supervisor, com poder sobre usuários, backups e dados. |
+| Destinatário | Patrocinador, cliente ou equipe. Recebe os documentos gerados, sem acesso ao sistema. |
 
-Requisitos: Python 3.10 ou superior (no Windows, o jeito mais fácil é instalar o **Python 3.13 pela Microsoft Store**).
+Esses papéis foram decididos na elicitação e chegam na Entrega 1. Hoje o protótipo só distingue o administrador dos demais usuários.
 
-**Jeito mais fácil:** dê dois cliques em **`iniciar.bat`** (Windows) ou rode `./iniciar.sh` (Linux/macOS). Na primeira vez ele instala
-o Flask; depois abre o navegador em **http://localhost:5000** sozinho. Para parar, feche a janela preta (ou `Ctrl+C`).
+## O que o protótipo faz hoje
 
-Pelo terminal, se preferir:
+- **Portfólio do PMO:** todos os projetos com o semáforo de prazo, custo, escopo, riscos, partes interessadas e questões. Também tem minhas pendências, busca, agenda de prazos com exportação para o calendário (.ics) e exportação para Excel.
+- **Guia do projeto:** mostra a próxima etapa a fazer, com glossário, ajuda e exemplo de preenchimento em cada tela, e um projeto de exemplo para consulta.
+- **Os 8 domínios de desempenho:**
+  - partes interessadas: identificar, analisar, priorizar, engajar e monitorar;
+  - equipe: membros, matriz RACI, acordo de trabalho e saúde da equipe;
+  - abordagem e ciclo de vida: os 15 fatores de escolha da abordagem, fases com revisão de fase e tailoring;
+  - planejamento: termo de abertura, declaração de visão, cronograma, orçamento e Gantt com dependências;
+  - trabalho do projeto: questões, mudanças, lições aprendidas, aquisições e recursos físicos;
+  - entrega: backlog, requisitos, definição de pronto, aceite, quadro de tarefas, linha de base do escopo, custo da qualidade e benefícios;
+  - medição: valor agregado, burnup e burndown, velocidade, fluxo, indicadores, plano de exceção e relatórios de status;
+  - incerteza: registro de riscos com probabilidade e impacto, reservas, valor monetário esperado e risco geral do projeto.
+- **Os 12 princípios:** autoavaliação, business case (VPL, ROI e payback), conformidade, mudança organizacional, registro de decisões e premissas.
+- **Revisão do PMO:** o usuário envia um registro para revisão, e o administrador aprova ou devolve com comentário. Há também nível de exigência (essencial ou rigoroso), modelos de projeto e a completude de cada registro.
+- **Alertas automáticos** em todos os domínios, reunidos nos pontos de atenção de cada projeto.
+- **Encerramento:** checklist, comparação com o planejado e avaliação final, com as opções de encerrar, cancelar ou reabrir o projeto.
+- **Dados e segurança:** login, histórico de todas as alterações, lixeira com restauração, backups automáticos verificados e assinados, e anonimização de dados pessoais (LGPD).
+
+Muitas dessas telas vão mudar, porque a auditoria achou regras a corrigir em todas as áreas. O que cada tela faz hoje está nos [inventários do protótipo](#documentação).
+
+## Situação do projeto
+
+### Como o protótipo foi feito
+
+O protótipo foi desenvolvido com *vibe coding*: o código foi gerado pelo Claude, IA da Anthropic, a partir de pedidos em linguagem natural, sem conceitos de engenharia de software. Não houve requisitos especificados, arquitetura planejada nem conferência de cada regra contra a referência. O resultado funciona e tem testes automatizados, mas as regras de negócio foram sendo criadas pelo caminho.
+
+### O que a auditoria encontrou
+
+Na conferência contra o PMBOK 7, apareceram:
+
+- regras de outras fontes apresentadas como se fossem do PMBOK 7, como a grade de Mendelow e os níveis de engajamento do PMBOK 6;
+- regras que contrariam o PMBOK 7, como o guia que chamava de fases os grupos de processos, que o PMBOK diz que se repetem dentro de cada fase;
+- regras que nunca disparam, ou que dependem de uma tela que pode estar desligada;
+- textos que prometem o que o código não faz, como a matriz RACI que "exigia" um aprovador, mas só avisava.
+
+### O que está sendo feito
+
+A elicitação especifica os requisitos do sistema que já existe ([issue #3](https://github.com/DennerRR/octante/issues/3)). Cada regra do protótipo é conferida contra o PMBOK 7, a única referência ([ADR 0001](docs/adr/0001-pmbok-7-como-referencia.md)), e recebe um de três veredictos:
+
+1. **De acordo com o PMBOK 7:** entra, com seção e página.
+2. **Não conforme:** é defeito, e a regra passa a seguir o PMBOK 7.
+3. **O PMBOK 7 não trata:** só fica por decisão explícita do PMO, marcada como "regra do PMO".
+
+O inventário do protótipo tem 321 regras de negócio, 138 requisitos funcionais e 136 não funcionais. A auditoria das regras e a revisão dos requisitos funcionais e não funcionais terminaram. O [resumo para confirmação](docs/requisitos/resumo-para-confirmacao.md) foi confirmado, e a [especificação](docs/requisitos/ERS.md) está sendo escrita em quatro partes: a parte 1 está pronta para revisão.
+
+### Próximos passos
+
+1. Terminar a especificação ([ERS](docs/requisitos/ERS.md), na estrutura simplificada da ISO/IEC/IEEE 29148), em quatro partes, cada uma aprovada pelo responsável pelo produto.
+2. Criar as issues de implementação, com as histórias de usuário e os critérios de aceite, a partir da ERS aprovada.
+3. Evoluir o protótipo até cumprir a especificação ([ADR 0003](docs/adr/0003-evoluir-o-prototipo-reauditando-as-regras.md)), em entregas:
+   - **Entrega 1:** papéis, criação do projeto pelo supervisor, revisão obrigatória, aprovação separada da revisão, encerramento pelo supervisor, parecer, acesso de consulta e desligamento.
+   - **Entrega 2:** núcleo e tailoring, nível de exigência e cadência de relatório por projeto, relatório de status com indicadores congelados, visão do supervisor por gerente de projetos e resumo dos alertas.
+   - **Entrega 3:** as regras de alerta e os módulos de tailoring.
+   - **Depois:** envio de e-mail e a adaptação ao PMBOK 8.
+
+## Requisitos já decididos (amostra)
+
+Uma amostra do que a elicitação decidiu, para dar uma ideia do sistema. Nada disso está implementado ainda. A lista completa está nos [documentos da elicitação](#documentação) e vai para a especificação.
+
+"p." é página do Guia do PMBOK 7, edição em inglês. "Qn" é a pergunta do [registro de decisões](docs/requisitos/decisoes-elicitacao.md) em que a decisão foi tomada.
+
+### Funcionais
+
+- O supervisor cria o projeto e escolhe o gerente do projeto e, se quiser, um gerente de apoio. O gerente do projeto entra sozinho na equipe do projeto. (Q27, Q114)
+- O termo de abertura passa pela revisão do supervisor e pela aprovação do patrocinador. Depois de aprovado, só muda por mudança aprovada. (Q10, Q15, Q62)
+- As partes interessadas seguem as cinco etapas do PMBOK 7: identificar, analisar, priorizar, engajar e monitorar. Cada parte tem plano de comunicação (como, com que frequência e por quem) e registro de contatos. (p. 10–14 e 186; Q105b, Q106b, Q108)
+- Cada projeto tem um núcleo, sempre presente, e módulos opcionais que o tailoring liga. O gerente do projeto propõe, e o supervisor revisa. Um módulo desligado some do projeto, com os seus alertas. (Q18, Q31, Q57, Q174a)
+- O guia do projeto segue os cinco grupos de processos, de Iniciação a Encerramento, e deixa claro que eles não são fases. (p. 170–171; Q149)
+- Os alertas têm três níveis (alto, médio e informativo), e cada um mostra a sua origem: a página do PMBOK 7 ou "regra do PMO". (Q153; [ADR 0005](docs/adr/0005-origem-de-cada-regra-na-tela.md))
+
+### Não funcionais
+
+- Hospedagem gratuita no PythonAnywhere. ([ADR 0002](docs/adr/0002-hospedagem-no-pythonanywhere-gratuito.md))
+- Login com senha de 8 ou mais caracteres, bloqueio de 5 minutos depois de 5 tentativas erradas e sessão de 12 horas. (Q51)
+- Cobertura de testes de no mínimo 95% de linhas e de ramificações, com a CI reprovando abaixo disso. Cada regra de negócio tem teste do caminho válido e do inválido. (Q77)
+- O administrador baixa uma cópia de segurança pelo menos uma vez por semana, porque os backups automáticos ficam no mesmo servidor do banco. (Q44)
+- LGPD: o administrador pode anonimizar os dados pessoais de um projeto encerrado ou cancelado, inclusive no histórico, na lixeira e nos textos dos contatos. (Q59)
+
+### Regras de negócio
+
+- Toda parte interessada tem uma categoria da Figura 2-2, e o fornecedor contratado entra sozinho como parte interessada. (p. 9, 76 e 185; Q147, Q170)
+- Cada linha da matriz RACI tem um único responsável pelo resultado (A) e pelo menos um executor (R). A linha incompleta aparece marcada, sem impedir a gravação. (p. 17 e 189; "um único A" é regra do PMO; Q117)
+- O risco pode ser cadastrado só com o título, mas só passa a "em resposta" com probabilidade, impacto, estratégia e responsável. (p. 122, 125 e 185; Q166b)
+- Projeto com ameaça ativa e orçamento sem reserva de contingência gera alerta, porque o orçamento deve incluir essa reserva. (p. 62; Q172a)
+- O limite de variação e o limite de risco ficam no termo de abertura e, depois da aprovação, só mudam por mudança aprovada. (p. 113 e 122; Q177)
+- Só o supervisor encerra, cancela ou reabre um projeto. O gerente do projeto prepara o encerramento, que passa por revisão obrigatória. (regra do PMO; Q29)
+
+## Como rodar o protótipo
+
+Precisa do Python 3.10 ou mais novo; os testes rodam no 3.10 e no 3.13. No Windows, o jeito mais fácil é instalar o Python 3.13 pela Microsoft Store.
+
+**Jeito mais fácil:** dê dois cliques em `iniciar.bat` (Windows) ou rode `./iniciar.sh` (Linux e macOS). Na primeira vez, ele instala as dependências; depois, abre o navegador em http://localhost:5000. Para parar, feche a janela ou use `Ctrl+C`.
+
+**Pelo terminal:**
 
 ```bash
-cd gestor-pmbok7
+git clone https://github.com/DennerRR/octante.git
+cd octante
 python -m pip install -r requirements.txt
 python app.py
 ```
 
-> Python da Microsoft Store: se criar um ambiente virtual (`.venv`) e o app disser `No module named 'flask'`, rode sem o `.venv`
-> (`deactivate`) ou use os comandos acima, que instalam no Python certo. Opções: `PORTA=5001` muda a porta; `SEM_NAVEGADOR=1` não abre o navegador; `NAVEGADOR=<caminho do .exe>` abre num navegador específico.
+### Primeiros passos
 
-Para explorar com dados prontos, clique em **Ver projeto de exemplo** na página inicial (ou rode `python exemplo.py`): ele cria o projeto fictício *AgendaFácil*.
+1. No primeiro acesso, o app pede para criar o administrador.
+2. O administrador cadastra os demais usuários na tela **Usuários**.
+3. Crie um projeto, ou abra o **projeto de exemplo** pela página inicial. Pelo terminal, `python exemplo.py` também cria o exemplo.
+4. Siga o guia do projeto, que mostra a próxima etapa a fazer.
 
-O banco é um arquivo SQLite em `instance/gestor.db`. Para fazer backup, use o link **Baixar uma cópia de segurança** no rodapé da página inicial (ou copie o arquivo com o app fechado). Para zerar tudo, apague-o.
+### Dados e opções
 
-**Atualizando de uma versão anterior:** substitua os arquivos do app e mantenha a pasta `instance/`. Ao iniciar, o app
-atualiza a estrutura do banco automaticamente (migrações versionadas), sem perder os dados.
+- O banco é o arquivo SQLite `instance/gestor.db`. Para guardar uma cópia, o administrador usa o link **baixar backup** da página inicial. Para começar do zero, apague o arquivo com o app fechado.
+- Ao atualizar o código, mantenha a pasta `instance/`: o app atualiza a estrutura do banco sozinho, sem perder os dados.
+- Opções: `PORTA=5001` muda a porta; `SEM_NAVEGADOR=1` não abre o navegador; `NAVEGADOR=<caminho do .exe>` escolhe o navegador; `FLASK_DEBUG=1` liga o modo de depuração; `GESTOR_FUSO` troca o fuso horário, que por padrão é `America/Sao_Paulo`.
+- Python da Microsoft Store: se, dentro de um ambiente virtual (`.venv`), o app disser `No module named 'flask'`, rode sem o `.venv` ou use os comandos acima.
+- Para publicar na internet, siga o [DEPLOY.md](DEPLOY.md).
 
-Para ativar o modo de depuração do Flask: `FLASK_DEBUG=1 python app.py` (no Windows: `set FLASK_DEBUG=1` antes).
+## Testes
 
-## O que tem no app
-
-| Domínio de desempenho | Módulo |
-|---|---|
-| 2.1 Partes interessadas | Ciclo completo da seção 2.1.1: **Identificar → Compreender e analisar → Priorizar → Engajar → Monitorar** |
-| 2.2 Equipe | Membros, liderança, estágio de Tuckman, acordo de trabalho, matriz RACI, saúde da equipe |
-| 2.3 Abordagem de desenvolvimento e ciclo de vida | Assistente com os 15 fatores da seção 2.3.4, escolha da abordagem e da cadência; fases com critérios de saída e revisão de fase; tailoring com diagnóstico da Tabela 3-1 |
-| 2.4 Planejamento | Termo de abertura, declaração de visão, cronograma (iterações, datas) e orçamento (custos planejados e reais) |
-| 2.5 Trabalho do projeto | Registro de questões, registro de mudanças com avaliação holística, lições aprendidas, consumo de reservas, **aquisições** (fazer ou comprar, fornecedor, contrato, avaliação) e **recursos físicos** (prazo de pedido, uso, desperdício, descarte) |
-| 2.6 Entrega | Escopo e backlog, requisitos, definição de pronto, aceite, quadro de tarefas, linha de base do escopo, custo da qualidade, benefícios |
-| 2.7 Medição | Semáforo, valor agregado, burnup, velocidade, fluxo, previsão de término, KPIs, plano de exceção, relatórios de status |
-| 2.8 Incerteza | Registro de riscos, matrizes P×I, limites, reservas, EMV, revisões, risco global, ambiguidade, complexidade e volatilidade |
-| Todos os domínios | Verificação de resultados com as tabelas 2-2 a 2-10 (status e evidência) e indicadores calculados pelo app |
-| Encerramento | Checklist, comparação com o planejado, avaliação final; encerrar, cancelar ou reabrir |
-
-| Princípio (seção 3) | Onde aparece no app |
-|---|---|
-| 1. Administração | **Conformidade e sustentabilidade** (legal, privacidade, segurança, financeira, ética, pessoas, ambiental, social), termo aprovado, uso das reservas |
-| 2. Equipe | Acordo de trabalho, RACI, saúde da equipe, planos de desenvolvimento |
-| 3. Partes interessadas | Ciclo completo de partes interessadas |
-| 4. Valor | **Business case** (necessidade, justificativa, estratégia, alternativas, VPL, ROI, payback, revisão periódica), benefícios, valor dos itens |
-| 5. Pensamento sistêmico | **Registro de decisões** com alternativas e efeitos em outras áreas, **premissas** validadas, avaliação holística de mudanças |
-| 6. Liderança | Modelo de liderança, Tuckman, visão, regras de decisão, decisões com envolvidos |
-| 7. Tailoring | Assistente de abordagem, tailoring e diagnóstico da Tabela 3-1 |
-| 8. Qualidade | Definição de pronto, qualidade dos requisitos, custo da qualidade, aceite |
-| 9. Complexidade | Ambiguidade, complexidade, volatilidade, premissas, entrega iterativa |
-| 10. Riscos | Registro de riscos, oportunidades, reservas, apetite e risco global |
-| 11. Adaptabilidade e resiliência | Plano de exceção, **lições aplicadas**, replanejamento, resiliência da equipe |
-| 12. Mudança | **Mudança organizacional**: estados atual e futuro, grupos afetados, prontidão, ações, curva de adoção, saturação |
-
-A página **Autoavaliação dos 12** calcula de 5 a 6 evidências por princípio a partir dos registros (forte ≥ 80%, parcial ≥ 50%, fraco)
-e guarda a reflexão da equipe sobre cada um.
-
-Detalhes do ciclo de partes interessadas:
-
-- **Identificar**: registro com papel, organização, categoria (Figura 2-2), interna/externa e status ativo.
-- **Compreender e analisar**: poder, interesse, influência, impacto, atitude, proximidade, crenças, expectativas e o Modelo de Saliência (seção 4.2.7.5).
-- **Priorizar**: grade poder × interesse, ordem sugerida pela análise e ordem manual confirmada pela equipe.
-- **Engajar**: matriz de avaliação do engajamento (atual × desejado) e plano de comunicação (push, pull ou interativa, com tipo formal/informal da Tabela 2-1 e frequência).
-- **Monitorar**: registro de interações com feedback e satisfação, histórico de mudanças de nível, tendência de satisfação e alertas.
-
-### Alertas automáticos
-
-- Parte interessada com poder alto (4 ou 5) que se opõe ao projeto.
-- Última satisfação registrada ≤ 2.
-- Parte no quadrante "Gerenciar de perto" sem interação nos últimos 30 dias.
-- Lacuna de 2 ou mais níveis entre o engajamento atual e o desejado.
-- Abordagem não definida; termo não aprovado (preditiva); visão não escrita (adaptativa/híbrida).
-- Ameaça acima do limite de risco sem estratégia, ou com aceitação passiva (sem plano de contingência).
-- Oportunidade com pontuação alta sem estratégia; risco sem responsável; risco sem revisão dentro da cadência; risco que ocorreu.
-- Risco global avaliado como alto; reserva de contingência menor que o EMV das ameaças.
-- Reserva de contingência ou de gerenciamento usada acima do disponível.
-- Questão com prazo vencido, sem responsável ou de prioridade alta sem prazo.
-- Mudança aguardando decisão há mais de 7 dias; mudança aprovada ainda não comunicada; risco que ocorreu sem questão.
-- Itens fora da linha de base sem mudança aprovada (scope creep); trabalho novo maior que o concluído em 30 dias; WIP acima do limite.
-- Item em andamento sem critérios de aceite; item concluído há mais de 14 dias sem aceite; mudança aprovada ainda fora do escopo.
-- Benefício com data prevista vencida; custo das falhas maior que o de prevenção e avaliação.
-- Indicador além do limite; indicador antecedente piorando duas vezes seguidas; indicador sem medição há 30 dias; dimensão crítica sem plano de exceção.
-- Equipe sem acordo de trabalho; linha da RACI sem aprovador ou executor; lacuna de habilidade sem plano; fator de alto desempenho com nota ≤ 2; equipe sem avaliação há 45 dias; equipe adaptativa com mais de 9 pessoas.
-- Fase com término vencido; situações da Tabela 3-1 detectadas.
-- Business case com VPL negativo; custo previsto acima do investimento; business case sem revisão há 90 dias.
-- Requisito de conformidade com prazo vencido; premissa não validada no prazo.
-- Grupo de alto impacto com prontidão baixa para a mudança; 4 ou mais grupos em transição ao mesmo tempo; princípios com pouca evidência.
-
-## Referências complementares (não fazem parte do PMBOK 7)
-
-Sinalizadas também na interface:
-
-- Nomes dos níveis de engajamento (Desconhece, Resistente, Neutro, Apoiador, Lidera): PMBOK 6ª ed., 13.2.2.5.
-- Nomes dos quadrantes da grade poder × interesse: grade de Mendelow.
-- Nomes das 7 classes de saliência: Mitchell, Agle e Wood (1997), modelo citado pelo PMBOK 7.
-- Modelo da declaração de visão: *elevator pitch* de Geoffrey Moore.
-- Conversão da escala de probabilidade em percentuais (10% a 90%) para o cálculo do EMV: convenção do app.
-- Siglas em português do valor agregado (VP, VA, CR, IDP, IDC, ENT, EPT, VNT, IDPT) e a regra 0/100 de valor agregado: prática consolidada do Standard for Earned Value Management, citado pelo guia.
-- Nomes dos estágios de Tuckman em português (formação, confronto, normatização, desempenho, dissolução): tradução usual; o modelo está na seção 4.2.6.1 do guia.
-- Escala de 1 a 5 para os fatores de alto desempenho e o limite de alerta em 2: convenção do app.
-- Faixas do semáforo a partir do limite de variação (atenção abaixo de 1 − limite; crítico abaixo de 1 − 2×limite): convenção do app.
-
-## Estrutura
-
-```
-app.py          rotas principais (projetos, abertura, partes interessadas, domínios)
-dicas.py        exemplos e orientações de preenchimento de cada campo
-suprimentos.py  aquisições e recursos físicos (Blueprint)
-incerteza.py    módulo do domínio Incerteza (Blueprint)
-trabalho.py     módulo do domínio Trabalho do Projeto (Blueprint)
-entrega.py      módulo do domínio Entrega (Blueprint)
-medicao.py      módulo do domínio Medição e do cronograma/orçamento (Blueprint)
-equipe.py       módulo do domínio Equipe (Blueprint)
-ciclo.py        fases do ciclo de vida, tailoring e encerramento (Blueprint)
-principios.py   12 princípios: autoavaliação, business case, conformidade, mudança organizacional, decisões e premissas (Blueprint)
-partes.py       regras do domínio Partes Interessadas
-graficos.py     gráficos em SVG (linhas e colunas)
-util.py         funções compartilhadas (conversões, formato de moeda)
-pmbok.py        conteúdo do PMBOK 7: domínios, princípios, fatores, classificações
-db.py           conexão SQLite e migrações versionadas
-schema.sql      estrutura base (v1); mudanças novas entram como migrações em db.py
-templates/      telas (Jinja2)
-static/         CSS e JS
-tests/          testes automatizados (pytest)
-exemplo.py      cria um projeto de exemplo
-auth.py         login e usuários
-auditoria.py    histórico de alterações e lixeira
-backup.py       backups automáticos, verificação e restauração
-seguranca.py    CSRF, cabeçalhos de segurança, fuso horário
-dados.py        telas de histórico, lixeira, backups e LGPD
-pmo.py          portfólio, pendências, revisão, busca, agenda, exportação, modelos
-metodos.py      MoSCoW, dependências e Gantt, burndown, Cynefin/Stacey, pré-mortem
-rotas_partes.py rotas das partes interessadas
-wsgi.py         entrada para hospedagem (ver DEPLOY.md)
-guia.py         fluxo de 5 fases, glossário e ajuda de cada tela
-iniciar.bat     atalho para abrir o app no Windows (iniciar.sh no Linux/macOS)
+```bash
+python -m pip install pytest pytest-cov
+python -m pytest
+python -m pytest --cov=. --cov-branch
 ```
 
-Testes: `pip install pytest` e depois `python -m pytest` (148 testes, incluindo a atualização de bancos criados por versões anteriores).
+O último comando mostra a cobertura de linhas e de ramificações. A meta decidida é de 95% (Q77), e a CI ainda não cobra essa meta. Os testes rodam no GitHub Actions a cada envio e a cada pull request.
 
-## Histórico de versões
+## Tecnologias e arquitetura
 
-A versão mais recente vem primeiro. O app foi construído em 14 iterações, cada uma com revisão técnica da anterior.
+- **Python 3.10+ e Flask 3**, com as telas montadas no servidor (Jinja2) e CSS e JavaScript próprios, sem framework de front-end.
+- **SQLite**, num único arquivo em `instance/`, com migrações versionadas em `db.py`. O histórico de alterações é gravado por gatilhos no próprio banco.
+- **Gráficos em SVG** gerados em Python (`graficos.py`), sem bibliotecas externas, e **openpyxl** para exportar para Excel.
+- **pytest** nos testes, rodando no GitHub Actions com Python 3.10 e 3.13.
+- **PythonAnywhere** na hospedagem, pela entrada `wsgi.py`. Ela liga o modo de produção (`GESTOR_PRODUCAO=1`), em que o cookie de sessão só trafega por HTTPS.
 
-**v18**: o projeto de exemplo se apresenta como exemplo ("Exemplo: AgendaFácil", cenário fictício de uma clínica), o topo
-mostra "PROJETO" antes do nome do projeto aberto, e a página inicial explica o que o Octante faz. Bancos antigos são renomeados sozinhos.
+O código é um monólito Flask, organizado em módulos por área do PMBOK, a maioria como Blueprint. Os nomes no código, nas telas e nos documentos estão em português.
 
-**v17**: o site adotou a paleta da marca. Topo roxo `#3A1D6E` com faixa laranja, ações em roxo `#5B33A8` (8,4:1 com texto
-branco), fundo lilás claro. O laranja `#FF9A1F` é só destaque (indicador do menu, próximo passo), nunca texto. Gráficos em
-roxo, laranja e ciano, validados para daltonismo. Os status (verde, âmbar, vermelho) não mudaram.
+### Estrutura do código
 
-**v16**: cores da marca trocadas para roxo e laranja (escolhidas entre 6 paletas).
+```
+app.py           rotas principais (projetos, abertura, domínios)
+rotas_partes.py  rotas das partes interessadas
+partes.py        regras das partes interessadas
+equipe.py        equipe, acordo de trabalho, RACI e saúde da equipe
+ciclo.py         fases do ciclo de vida, tailoring e encerramento
+medicao.py       medição, cronograma e orçamento
+trabalho.py      questões, mudanças e lições aprendidas
+entrega.py       escopo, backlog, aceite e qualidade
+incerteza.py     riscos e outras incertezas
+suprimentos.py   aquisições e recursos físicos
+principios.py    princípios, business case, conformidade, mudança organizacional, decisões e premissas
+metodos.py       MoSCoW, dependências e Gantt, burndown, Cynefin e Stacey, pré-mortem
+pmo.py           portfólio, pendências, revisão, busca, agenda, exportação e modelos
+guia.py          guia do projeto, glossário e ajuda de cada tela
+dicas.py         exemplos e orientações de preenchimento
+pmbok.py         conteúdo do PMBOK usado nas telas
+graficos.py      gráficos em SVG
+auth.py          login e usuários
+auditoria.py     histórico de alterações e lixeira
+backup.py        backups automáticos, verificação e restauração
+dados.py         telas de histórico, lixeira, backups e LGPD
+seguranca.py     CSRF, cabeçalhos de segurança e fuso horário
+db.py            conexão SQLite e migrações
+schema.sql       estrutura inicial do banco
+util.py          funções compartilhadas
+exemplo.py       cria o projeto de exemplo
+wsgi.py          entrada para a hospedagem (ver DEPLOY.md)
+templates/       telas (Jinja2)
+static/          CSS, JavaScript e marca
+tests/           testes automatizados (pytest)
+```
 
-**v15** (marca)
-- Novo nome: **Octante**. O octante é o instrumento de navegação que mede ângulos com 1/8 de círculo: o nome junta orientar
-  o rumo do projeto, medir o desempenho e os 8 domínios do PMBOK 7.
-- Logo em SVG (`static/marca/`): círculo dividido em 8 partes (domínios) com 12 marcas no aro (princípios) e um octante laranja
-  deslocado para fora (o projeto avançando). Versões para fundo claro e escuro, símbolo e favicon. Cores (v16): roxo `#3A1D6E`,
-  laranja `#FF9A1F`, lavanda `#6B5A88`. Nome desenhado com Poppins (licença OFL), convertido em contorno.
+## Limitações conhecidas
 
-**v14** (PMO, estagiários e modelos do PMBOK)
-- **Portfólio**: todos os projetos numa tabela com o semáforo de prazo, custo, escopo, riscos, partes e questões, do mais crítico ao mais tranquilo.
-- **Acesso por projeto**: administrador vê tudo; os demais veem só os projetos em que foram incluídos (o criador entra sozinho).
-- **Minhas pendências**: questões, riscos e itens em que a pessoa é responsável, em todos os projetos (o membro da equipe pode
-  ser ligado ao usuário do app para reconhecer apelidos).
-- **Revisão do PMO**: o estagiário envia termo, risco, mudança, item, questão ou relatório para revisão; o PMO aprova ou devolve com comentário.
-- **Modelos de projeto** (Scrum, híbrido, preditivo) com abordagem, fases, definição de pronto e riscos típicos.
-- **Nível de exigência** (essencial ou rigoroso) e **completude** de cada registro ("62% preenchido, falta: causa, efeito").
-- **Agenda de prazos** do projeto, com exportação para o calendário (.ics). **Busca** em todos os projetos (tecla /).
-  **Exportar para Excel** os registros de riscos, questões, mudanças, partes, backlog e lições (protegido contra injeção de fórmulas).
-- Seção 4 do PMBOK: **MoSCoW**, **dependências e Gantt**, **burndown**, **Cynefin e Stacey** (complexidade) e **pré-mortem**.
-- "**Ver exemplo preenchido**" em cada tela; rotas de partes interessadas separadas do `app.py`; testes automáticos no GitHub (`.github/workflows`).
+- As regras de negócio ainda são as do protótipo, porque as decisões da elicitação não foram implementadas.
+- O bloqueio de tentativas de login fica na memória e zera quando o app reinicia. A contagem é por endereço IP, e no PythonAnywhere todos podem aparecer com o mesmo IP e ficar bloqueados juntos. A correção foi decidida nas Q186 e Q186b.
+- Algumas garantias só existem no navegador: a confirmação de exclusão, o bloqueio de duplo envio, a marca de campo obrigatório e o aviso de alterações não salvas.
+- Na tela estreita, o menu depende de JavaScript.
+- O ajuste para o fuso de Brasília não tem efeito no Windows.
 
-**v13** (segurança dos dados)
-- **Histórico de alterações** de todo registro (quem, quando, antes e depois), gravado por gatilhos no próprio banco.
-- **Lixeira**: projeto ou registro excluído pode ser restaurado pelo administrador, inclusive com todos os registros ligados a ele.
-- **Backups automáticos**: um por dia, outro antes de cada atualização do banco e outro antes de cada restauração. Cada cópia
-  é verificada (integridade) e assinada (SHA-256). Restauração pela tela **Dados**, também a partir de arquivo enviado.
-- **Validações dentro do banco** (probabilidade e impacto de 1 a 5, valores não negativos, datas coerentes) e índices em todas
-  as chaves estrangeiras.
-- **Segurança web**: token CSRF em todo formulário, cabeçalhos de segurança (CSP, anti-iframe, HSTS em produção), limite de
-  tamanho, trocar a senha encerra as outras sessões, bloqueio de tentativas por conta e por máquina.
-- **Fuso de Brasília** mesmo em servidor UTC. **LGPD**: anonimizar os dados pessoais de projetos encerrados.
+As decisões sobre os outros pontos estão nas Q198 (confirmação numa tela do servidor), Q200 e Q200b (o Octante não é feito para celular, mas a tela estreita continua para quem usa zoom no computador) e Q206 (o fuso vale também no Windows). Os defeitos abertos estão nas [issues com o rótulo bug](https://github.com/DennerRR/octante/issues?q=is%3Aissue+is%3Aopen+label%3Abug).
 
-**v12** (revisão de regras, usabilidade e novo design: detalhes em **AVALIACAO.md**)
-- 9 regras de negócio corrigidas, entre elas: projeto encerrado só para consulta, aprovação do termo exige quem aprovou, fluxo só
-  conta o termo aprovado, mudanças aprovadas não podem ser excluídas, iterações sem sobreposição, partes interessadas sem duplicata
-  e exclusão de projeto só pelo administrador.
-- Avaliação pelas 10 heurísticas de Nielsen: confirmação em toda exclusão, campos obrigatórios marcados, aviso de alterações não
-  salvas, botão "Aguarde…", erros anunciados e focados, "pular para o conteúdo", foco visível e menu recolhível no celular.
-- Nova identidade visual: paleta azul-marinho e índigo com contraste AA em variáveis CSS, componentes padronizados e cores de
-  gráfico validadas para daltonismo.
+## Documentação
 
-**v11** (publicação na internet)
-- **Login obrigatório**: primeiro acesso cria o administrador; ele cadastra os usuários (ex.: estagiários), redefine senhas e
-  desativa contas. Cada pessoa troca a própria senha. Senhas com hash (Werkzeug), mínimo de 8 caracteres, bloqueio de 5 minutos
-  após 5 tentativas erradas, redirecionamento pós-login só para páginas do próprio app, sessão de 12 horas.
-- Backup do banco só para administradores. Cookie de sessão `HttpOnly`, `SameSite=Lax` e `Secure` em produção.
-- **`wsgi.py`** e **`DEPLOY.md`**: passo a passo para publicar grátis no PythonAnywhere.
+| Documento | O que tem |
+|---|---|
+| [Especificação de requisitos (ERS)](docs/requisitos/ERS.md) | O que o Octante deve fazer, requisito por requisito; rascunho, com a parte 1 de 4 |
+| [Resumo para confirmação](docs/requisitos/resumo-para-confirmacao.md) | O que a elicitação decidiu, por área, com o número de cada pergunta |
+| [Requisitos funcionais: regras e decisões](docs/requisitos/rf-regras-decisoes.md) | Cada requisito funcional do protótipo, as regras que aplica e as decisões que o mudam |
+| [Registro de decisões](docs/requisitos/decisoes-elicitacao.md) | Cada pergunta da elicitação, a decisão e a origem |
+| [Origem das regras](docs/requisitos/origem-das-regras.md) | A origem conferida de cada uma das 321 regras |
+| [Regras do protótipo](docs/requisitos/inventario-regras-prototipo.md) | As regras de negócio como o protótipo faz hoje |
+| [Requisitos do protótipo](docs/requisitos/inventario-requisitos-prototipo.md) | Os requisitos funcionais e não funcionais como estão hoje |
+| [Glossário](GLOSSARY.md) | Os termos do domínio e os que se deve evitar |
+| [ADRs](docs/adr/) | As decisões de arquitetura |
+| [DEPLOY.md](DEPLOY.md) | Como publicar no PythonAnywhere |
 
-**v10** (revisão como engenheiro de software e como gerente de projeto iniciante)
-- Primeira abertura: botão **Ver projeto de exemplo** (sem terminal) e texto da página inicial alinhado ao fluxo de 5 fases.
-- Projeto novo abre direto no **fluxo**; a visão geral mostra a trilha das 5 fases e um único **Próximo passo** com botão "Fazer agora".
-  O guia de 8 passos (v8) foi substituído por esse, para não haver duas listas diferentes.
-- Projeto recém-criado vê só o essencial: painéis de situação, domínios e princípios aparecem depois da fase Iniciar, e o alerta
-  "princípios com pouca evidência" não aparece antes disso.
-- **Modo essencial** no menu (padrão): Compras, Business case, Conformidade, Mudança organizacional, Decisões, Fases, Tailoring e
-  Custo da qualidade ficam ocultos até clicar em "Mostrar todas as telas".
-- Tela de abordagem com atalho "Primeira vez?" e link direto para a decisão. Menu do topo: "Princípios" virou "Sobre o PMBOK 7".
-- Engenharia: **`iniciar.bat` / `iniciar.sh`** (instala o Flask e abre o navegador), aviso de porta em uso, **backup** consistente
-  pelo navegador (API de backup do SQLite), dicas calculadas uma vez por tela (cache), imports organizados, correção visual dos
-  selos de porcentagem dos princípios.
+As páginas citadas são da edição em inglês do PMBOK 7. O livro não fica no repositório, por direitos autorais.
 
-**v9**
-- **Fluxo do projeto**: fluxograma em 5 fases (Iniciar, Planejar, Executar, Acompanhar, Encerrar) com o que já foi feito e o próximo passo.
-- **Menu lateral na ordem do trabalho**, com nomes em linguagem simples (o nome do domínio PMBOK aparece em cada etapa do fluxo).
-- **Glossário simples** e faixa "Para que serve / O que fazer" no topo de cada tela (some junto com o botão 💡 Dicas).
+## Como o trabalho é organizado
 
-**v8**
-- **Verificação completa contra o PMBOK 7**: nomes, tabelas e seções conferidos; duas referências de seção corrigidas e o texto de "Princípios" alinhado ao Standard (seção 3).
-- Lacunas fechadas: **Aquisições e recursos físicos** (2.5.5, 2.5.6) com alertas, indicadores, fornecedor que vira parte interessada e checagem no encerramento; **plano de comunicação** (informação necessária e quem envia) nas partes interessadas.
-- **Dicas de preenchimento**: cada campo mostra um exemplo (AgendaFácil) e uma orientação curta; botão 💡 Dicas no topo liga/desliga.
-- **Telas mais simples**: guia "Por onde começar" na visão geral (8 passos, com o próximo destacado) e link para Aquisições no domínio Trabalho.
+- As tarefas são [issues no GitHub](https://github.com/DennerRR/octante/issues).
+- Cada issue tem a sua branch, criada a partir da `develop`, com o nome `<tipo>/<número-da-issue>-<descrição-curta>`, como `fix/1-gatilhos-da-auditoria`. Os tipos são `feature`, `fix`, `hotfix`, `docs`, `refactor`, `test` e `chore`.
+- As mensagens de commit são em português, com o verbo no presente ("Corrige…", "Registra…"), e citam a issue.
+- O trabalho entra na `develop` por pull request, e os testes rodam em cada um. A `main` guarda as versões publicadas.
+- O projeto usa o Claude Code como assistente. As convenções para os agentes estão no [CLAUDE.md](CLAUDE.md) e em [docs/agents/](docs/agents/).
 
-**v7**
-- Cobertura dos **12 princípios** integrada aos módulos existentes (novo grupo "Princípios" no menu lateral):
-  - **Autoavaliação dos 12**: evidências calculadas para cada princípio, com link para o que falta, gráfico e reflexão da equipe;
-  - **Business case e valor** (princípio 4): VPL, ROI, payback, gráfico do valor presente acumulado e comparação com o custo previsto;
-  - **Conformidade e sustentabilidade** (princípio 1): requisitos por área, prazo, responsável e evidência obrigatória para marcar como atendido;
-  - **Mudança organizacional** (princípio 12): estados atual e futuro, grupos afetados ligados às partes interessadas, prontidão, metas e curva de adoção;
-  - **Decisões e premissas** (princípios 5, 6 e 9): registro de decisões com alternativas, envolvidos e efeitos; premissas com prazo de validação.
-- Lições aprendidas podem ser marcadas como **aplicadas** (princípio 11).
-- Visão geral mostra o nível de evidência de cada princípio; encerramento verifica conformidade e adoção.
-- Gráfico de linhas aceita valores negativos; `exemplo.py` virou função reutilizável (`criar(app)`).
+## Licença
 
-**v6**
-- Novo módulo do domínio **Equipe** (seção 2.2):
-  - membros com papel, dedicação, local, habilidades, lacunas, plano de desenvolvimento e motivador principal;
-  - modelo de gestão (centralizada ou distribuída) e estágio da equipe na escada de Tuckman;
-  - **acordo de trabalho** (team charter): valores, comunicação, decisões, conflitos e reuniões;
-  - **matriz RACI** que exige exatamente um aprovador (A) e pelo menos um executor (R) por linha;
-  - **saúde da equipe**: avaliação periódica dos 9 fatores de equipes de alto desempenho, com histórico e gráfico.
-- **Ciclo de vida** (2.3.5): fases com critérios de saída e **revisão de fase**. Concluir uma fase exige todos os critérios atendidos e uma decisão registrada; há fases sugeridas para cada abordagem.
-- **Tailoring** (seção 3):
-  - perguntas sobre produto, equipe e cultura;
-  - registro do que foi adicionado, removido ou ajustado;
-  - **diagnóstico da Tabela 3-1** a partir dos dados do app, como esperas longas por aprovação, WIP alto, falhas de qualidade e partes interessadas insatisfeitas.
-- **Encerramento**: checklist automático (entregas, mudanças, questões, riscos, benefícios, lições, fases, equipe), itens manuais (contratos, arquivo, transição, revisão do business case), comparação com o planejado e avaliação final. O projeto pode ser encerrado, cancelado (com justificativa) ou reaberto.
-- Revisão técnica da v5: gráficos de colunas passaram a mostrar todos os rótulos (quebrando em duas linhas) e a aceitar escala fixa.
+[MIT](LICENSE): qualquer pessoa pode usar, copiar, modificar e distribuir o código, desde que mantenha o aviso de direitos autorais e o texto da licença. O software vem sem garantia. A licença vale para o conteúdo deste repositório; o PMBOK® Guide não faz parte dele.
 
-**v5**
-- **Cronograma e orçamento** (Planejamento, 2.4.2.3 e 2.4.2.4): datas do projeto, iterações com meta e capacidade, e por item a iteração, as datas planejadas e os custos planejado e real.
-- Novo módulo do domínio **Medição** (seção 2.7):
-  - **semáforo** por dimensão (prazo, custo, escopo, riscos, partes interessadas e questões), com ícone e rótulo além da cor;
-  - **valor agregado**: VP, VA, CR, variações, IDP, IDC, ENT, EPT, VNT e IDPT, usando os valores da linha de base quando houver, e a curva VP/VA/CR;
-  - **burnup**, **velocidade por iteração**, lead time, cycle time, WIP, vazão e **previsão de término** pela velocidade ou pela vazão;
-  - **indicadores (KPIs)** antecedentes e de resultado, com meta, limite, histórico e tendência, além dos critérios SMART e das armadilhas de medição;
-  - **limite de variação e plano de exceção**, com alerta quando algo fica crítico sem plano;
-  - **relatórios de status** que congelam a situação do dia, com sugestões de realizações e próximos passos, prontos para imprimir ou salvar em PDF.
-- Gráficos em SVG gerados no próprio app (sem bibliotecas externas), com legenda, rótulos finais e tabela com os dados.
-- Revisão técnica da v4: regras de partes interessadas foram para `partes.py`, e os pontos de atenção de todos os domínios passaram a ser reunidos em uma única função (`alertas_do_projeto`).
+## Autoria
 
-**v4**
-- Novo módulo do domínio **Entrega** (seção 2.6) e do planejamento do escopo (2.4.2.1):
-  - **escopo e backlog** em árvore (épicos, funcionalidades, histórias, entregáveis, pacotes de trabalho), com código rastreável, valor de negócio, estimativa e ordem de prioridade;
-  - verificação de **requisito bem documentado** (claro, conciso, verificável, consistente, rastreável) por item;
-  - **definição de pronto** do projeto: concluir um item exige confirmar que ele a atende;
-  - **aceite**: só com critérios de aceite e o nome de quem aceitou;
-  - **quadro de tarefas** com limite de trabalho em andamento (WIP);
-  - **linha de base do escopo** versionada; refazer exige motivo;
-  - detecção de *scope creep* (itens depois da linha de base sem mudança aprovada, nas abordagens preditiva e híbrida) e de backlog que cresce mais rápido do que é concluído (adaptativa);
-  - **custo da qualidade** em 4 categorias (prevenção, avaliação, falha interna, falha externa), com defeitos resolvidos;
-  - **benefícios** esperados com medida, meta, data prevista e resultado.
-- Integrações: mudança aprovada e resposta a risco viram itens do backlog (backlog ajustado ao risco), com aviso quando uma mudança aprovada ainda não foi incorporada ao escopo.
-- Revisão técnica da v3: testes passaram a usar apoio compartilhado (`tests/conftest.py`, `tests/ajuda.py`) e deixaram de fixar o número da versão do banco.
+Idealizado e conduzido por **Denner Ramiro Ribeiro**, responsável pelo produto. O código do protótipo foi gerado com o Claude (Anthropic).
 
-**v3**
-- Novo módulo do domínio **Trabalho do Projeto** (seção 2.5):
-  - **registro de questões** com prioridade, responsável, prazo e resolução obrigatória ao fechar;
-  - risco que **ocorre** abre automaticamente uma questão com o plano de contingência, uma única vez;
-  - **consumo de reservas**: questões ligadas a riscos usam a contingência e eventos não previstos usam a reserva de gerenciamento, com alerta quando o uso passa do reservado;
-  - **registro de mudanças** com fluxo solicitada → em análise → aprovada/rejeitada → implementada;
-  - avaliação holística em 6 dimensões (escopo, cronograma, orçamento, recursos, partes interessadas e riscos), obrigatória antes da decisão nas abordagens preditiva e híbrida (*tailoring*);
-  - registro de quem decidiu e de quando a mudança foi comunicada às partes interessadas (2.5.7);
-  - **lições aprendidas** com tipo (manter/melhorar), conhecimento explícito ou tácito (2.5.8.2), alcance (projeto, outras equipes ou organização) e ligação com a questão de origem;
-  - painel do domínio com tempo médio de resolução e pontos de atenção (questão atrasada, mudança parada há mais de 7 dias, mudança aprovada não comunicada).
-- Integrações:
-  - termo de abertura aprovado aponta para o registro de mudanças;
-  - mudanças por parte interessada aparecem como evidência no domínio de Partes Interessadas (Tabela 2-2);
-  - riscos mostram as questões abertas a partir deles.
-- Revisão técnica da v2:
-  - o filtro das listas disparava um aviso falso de "sair da página";
-  - a reserva de contingência sumia do total quando o risco ocorria (agora só é liberada quando o risco é encerrado);
-  - tipo de risco inválido na URL era aceito;
-  - a barra "Salvar" fixa ficou mais legível.
-
-**v2**
-- Novo módulo do domínio **Incerteza** (seção 2.8):
-  - registro de riscos com ameaças e oportunidades, causa, efeito, fonte, responsável e parte interessada relacionada;
-  - probabilidade × impacto e matrizes separadas para ameaças e oportunidades;
-  - limite de risco configurável e apetite a risco;
-  - estratégias de resposta específicas de cada tipo (2.8.5.1 e 2.8.5.2), gatilho, plano de contingência, riscos secundários e residuais;
-  - EMV, reservas de contingência por risco e reserva de gerenciamento do projeto (2.8.5.3);
-  - revisões com histórico e cadência configurável (2.8.5.4);
-  - avaliação do risco global do projeto;
-  - registro de incertezas de ambiguidade, complexidade e volatilidade, com as respostas das seções 2.8.1 a 2.8.4.
-- Integração: riscos aparecem na visão geral e nos pontos de atenção, e cada parte interessada mostra seus riscos relacionados.
-- Revisão técnica da v1:
-  - migrações versionadas do banco;
-  - bloqueio de formulários enviados por outros sites (CSRF);
-  - chave secreta gerada por instalação e depurador desligado por padrão;
-  - interações com data futura rejeitadas;
-  - aviso ao alterar um termo de abertura já aprovado;
-  - valores em reais no formato brasileiro (`50.000` = cinquenta mil).
-
-**v1**
-- Partes interessadas (ciclo completo), abordagem de desenvolvimento, abertura e verificação de resultados dos 8 domínios.
-
-## Possíveis evoluções
-
-Os 8 domínios de desempenho e os 12 princípios já estão cobertos. Melhorias possíveis:
-exportação dos registros para planilha, autenticação para uso por mais de uma pessoa e um portfólio com vários projetos lado a lado.
+PMBOK® é marca registrada do Project Management Institute, Inc. O Octante não tem vínculo com o PMI.
