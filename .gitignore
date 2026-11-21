@@ -7,3 +7,11 @@ __pycache__/
 *.sqlite3
 .env
 *.zip
+
+# Material de referência com direitos autorais (ex.: PDF do PMBOK): nunca versionar
+referencias/
+*.pdf
+
+# Relatórios de cobertura de testes (gerados pelo pytest-cov)
+.coverage
+htmlcov/
