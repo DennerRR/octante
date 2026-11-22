@@ -5,8 +5,8 @@
 | Campo | Valor |
 |---|---|
 | Produto | Octante: ferramenta de trabalho de um PMO para gerenciar projetos guiados pelo PMBOK 7 |
-| Versão | 1.0, aprovada: a linha de base dos requisitos |
-| Data | 20/11/2026 |
+| Versão | 1.1, aprovada: a linha de base dos requisitos, com as mudanças da Q219 |
+| Data | 22/11/2026 |
 | Estado | Aprovada em 20/11/2026 pelo responsável pelo produto. Daqui em diante, cada mudança segue a Q219. |
 | Dono dos requisitos | O responsável pelo produto, que aprova a ERS e cada mudança nela (Q216, Q219) |
 | Norma | ISO/IEC/IEEE 29148:2018, seção 9.6, com a adaptação declarada na seção 0.2 (Q13, Q214) |
@@ -22,6 +22,7 @@
 | 0.4 | 20/11/2026 | Parte 3: princípios, aquisições, métodos, guia e encerramento (seções 3.2.13 a 3.2.17), aprovada com a Q224: o custo previsto (RN-PR-03) passa ao domínio Planejamento. | Q214 a Q219, Q224 |
 | 0.5 | 20/11/2026 | Parte 4: não funcionais (seções 3.3 a 3.8), verificação (seção 4) e informações de apoio (seção 5). | Q214 a Q219, Q225 |
 | 1.0 | 20/11/2026 | ERS aprovada: as quatro partes e as Q220 a Q225. Linha de base dos requisitos. | Q218, Q225 |
+| 1.1 | 22/11/2026 | Seção 3.2.1: a RN-PM-79 nova (sessões encerradas quando o Administrador redefine a senha), que a RF-US-06 passa a aplicar; a RN-PM-05 passa a recusar também a lista das contas a quem não é Administrador. | Q230, Q231 |
 
 ### 0.1 Sumário
 
@@ -296,7 +297,7 @@ Contas, tipos de conta, papel de Administrador, primeiro acesso, login, sessão 
 | RF-US-03 | Quando a pessoa pede para sair, o sistema deve encerrar a sessão dela. | — | Protótipo (Q209) | confirmado | App | 1 | teste |
 | RF-US-04 | O sistema deve permitir que a pessoa troque a própria senha. | RN-PM-29, RN-PM-32, RN-PM-33 | Q51, Q187 | alterado | App | 1 | teste |
 | RF-US-05 | O sistema deve permitir que o Administrador cadastre uma conta com nome, login, e-mail, senha inicial, tipo da conta e papel de Administrador. | RN-PM-02, RN-PM-05, RN-PM-06, RN-PM-29 | Q7, Q22, Q41, Q52, Q210 | alterado | App | 1 | teste |
-| RF-US-06 | O sistema deve permitir que o Administrador redefina a senha de outra conta. | RN-PM-05, RN-PM-29 | Q52 | alterado | App | 1 | teste |
+| RF-US-06 | O sistema deve permitir que o Administrador redefina a senha de outra conta. | RN-PM-05, RN-PM-29, RN-PM-79 | Q52 | alterado | App | 1 | teste |
 | RF-US-07 | O sistema deve permitir que o Administrador mude a situação de uma conta entre ativa e desativada. | RN-PM-05, RN-PM-34 a RN-PM-36, RN-PM-38 | Q28, Q32, Q52 | alterado | App | 1 | teste |
 | RF-US-08 | O sistema deve mostrar ao Administrador a lista das contas, com o nome, o login, o tipo da conta, o papel de Administrador e a situação de cada uma. | RN-PM-05 | Q52, Q210 | alterado | App | 1 | teste |
 | RF-US-09 | O sistema deve permitir que o Administrador edite o nome, o e-mail, o tipo e o papel de Administrador de uma conta. | RN-PM-05, RN-PM-06, RN-PM-35 | Q22, Q41, Q52 | novo | App | 1 | teste |
@@ -309,7 +310,7 @@ Contas, tipos de conta, papel de Administrador, primeiro acesso, login, sessão 
 | RN-PM-02 | O login deve ser único no Octante e reconhecido sem diferença entre maiúsculas e minúsculas. | Regra do PMO (Q51) | confirmado | App | 1 | teste |
 | RN-PM-03 | Depois de 5 senhas erradas seguidas para uma conta, vindas da mesma máquina, o sistema deve recusar o login dessa conta, a partir dessa máquina, por 5 minutos. | Regra do PMO (Q186, Q186b, Q220; OWASP ASVS 5.0, 6.1.1) | alterado | App | 1 | teste |
 | RN-PM-04 | O sistema deve encerrar a sessão depois de 3 horas sem uso ou 12 horas depois do login, o que vier primeiro. | Regra do PMO (Q187; LGPD, art. 46) | alterado | App | 1 | teste |
-| RN-PM-05 | O sistema deve recusar que uma conta sem o papel de Administrador cadastre conta, edite conta, redefina a senha de outra conta ou mude a situação de uma conta. | Regra do PMO (Q52) | alterado | App | 1 | teste |
+| RN-PM-05 | O sistema deve recusar que uma conta sem o papel de Administrador veja a lista das contas, cadastre conta, edite conta, redefina a senha de outra conta ou mude a situação de uma conta. | Regra do PMO (Q52, Q231) | alterado | App | 1 | teste |
 | RN-PM-06 | O papel de Administrador deve ficar somente em contas do tipo supervisor. | Regra do PMO (Q22, Q52) | alterado | App | 1 | teste |
 | RN-PM-25 | O sistema deve criar a primeira conta somente quando o código de instalação informado for igual ao gerado na instalação. | Regra do PMO (Q188; OWASP ASVS 5.0, 6.3.2) | novo | App | 1 | teste |
 | RN-PM-26 | Depois que a primeira conta existe, o sistema deve recusar o acesso à tela Primeiro acesso. | Regra do PMO (Q52, Q188) | novo | App | 1 | teste |
@@ -325,6 +326,7 @@ Contas, tipos de conta, papel de Administrador, primeiro acesso, login, sessão 
 | RN-PM-36 | O sistema deve recusar a desativação de uma conta que é o gerente do projeto de um projeto em andamento. | Regra do PMO (Q28, Q32, Q220) | novo | App | 1 | teste |
 | RN-PM-37 | O sistema deve mostrar ao Administrador, no portfólio, um alerta médio quando um gerente de projetos ativo já foi gerente do projeto ou gerente de apoio e hoje não é nenhum dos dois em um projeto em andamento, com a ação sugerida de confirmar o desligamento e desativar a conta. | Regra do PMO (Q32, Q153, Q183) | novo | App | 1 | teste |
 | RN-PM-38 | O sistema deve manter a conta desativada no Octante, com o nome dela no histórico. | Regra do PMO (Q28) | novo | App | 1 | teste |
+| RN-PM-79 | O sistema deve encerrar as sessões abertas de uma conta quando o Administrador redefine a senha dela. | Regra do PMO (Q230) | novo | App | 1 | teste |
 
 Na RN-PM-03, as outras contas e as outras máquinas não são afetadas. Na RN-PM-37, o gerente de projetos que nunca teve projeto não gera alerta (Q183).
 
@@ -1785,4 +1787,4 @@ Os dados da página de privacidade (controlador, encarregado e base legal) não 
 
 ---
 
-**Fim da ERS.** Versão 1.0, a linha de base dos requisitos (Q218).
+**Fim da ERS.** Versão 1.1, a linha de base dos requisitos (Q218), com as mudanças da Q219.
