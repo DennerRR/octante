@@ -73,12 +73,12 @@ A elicitação especifica os requisitos do sistema que já existe ([issue #3](ht
 2. **Não conforme:** é defeito, e a regra passa a seguir o PMBOK 7.
 3. **O PMBOK 7 não trata:** só fica por decisão explícita do PMO, marcada como "regra do PMO".
 
-O inventário do protótipo tem 321 regras de negócio, 138 requisitos funcionais e 136 não funcionais. A auditoria das regras e a revisão dos requisitos funcionais e não funcionais terminaram. O [resumo para confirmação](docs/requisitos/resumo-para-confirmacao.md) foi confirmado, e a [especificação](docs/requisitos/ERS.md) está sendo escrita em quatro partes: a parte 1 está pronta para revisão.
+O inventário do protótipo tem 321 regras de negócio, 138 requisitos funcionais e 136 não funcionais. A auditoria das regras e a revisão dos requisitos funcionais e não funcionais terminaram. O [resumo para confirmação](docs/requisitos/resumo-para-confirmacao.md) foi confirmado, e a [especificação](docs/requisitos/ERS.md) foi aprovada na versão 1.0, com 789 requisitos (173 funcionais, 501 regras de negócio e 115 não funcionais), hoje na versão 1.1. Agora as histórias de usuário da Entrega 1 viram [issues](https://github.com/DennerRR/octante/issues), um domínio por vez: o Encerramento e Usuários e acesso estão prontos.
 
 ### Próximos passos
 
-1. Terminar a especificação ([ERS](docs/requisitos/ERS.md), na estrutura simplificada da ISO/IEC/IEEE 29148), em quatro partes, cada uma aprovada pelo responsável pelo produto.
-2. Criar as issues de implementação, com as histórias de usuário e os critérios de aceite, a partir da ERS aprovada.
+1. Terminar as histórias de usuário da Entrega 1, com os critérios de aceite, a partir da [ERS](docs/requisitos/ERS.md) aprovada: um épico por domínio e uma issue por requisito, no [marco Entrega 1](https://github.com/DennerRR/octante/milestone/1).
+2. Juntar a elicitação à `develop`, pelo PR da issue #3.
 3. Evoluir o protótipo até cumprir a especificação ([ADR 0003](docs/adr/0003-evoluir-o-prototipo-reauditando-as-regras.md)), em entregas:
    - **Entrega 1:** papéis, criação do projeto pelo supervisor, revisão obrigatória, aprovação separada da revisão, encerramento pelo supervisor, parecer, acesso de consulta e desligamento.
    - **Entrega 2:** núcleo e tailoring, nível de exigência e cadência de relatório por projeto, relatório de status com indicadores congelados, visão do supervisor por gerente de projetos e resumo dos alertas.
