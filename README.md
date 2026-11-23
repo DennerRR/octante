@@ -73,7 +73,7 @@ A elicitação especifica os requisitos do sistema que já existe ([issue #3](ht
 2. **Não conforme:** é defeito, e a regra passa a seguir o PMBOK 7.
 3. **O PMBOK 7 não trata:** só fica por decisão explícita do PMO, marcada como "regra do PMO".
 
-O inventário do protótipo tem 321 regras de negócio, 138 requisitos funcionais e 136 não funcionais. A auditoria das regras e a revisão dos requisitos funcionais e não funcionais terminaram. O [resumo para confirmação](docs/requisitos/resumo-para-confirmacao.md) foi confirmado, e a [especificação](docs/requisitos/ERS.md) foi aprovada na versão 1.0, com 789 requisitos (173 funcionais, 501 regras de negócio e 115 não funcionais), hoje na versão 1.1. Agora as histórias de usuário da Entrega 1 viram [issues](https://github.com/DennerRR/octante/issues), um domínio por vez: o Encerramento e Usuários e acesso estão prontos.
+O inventário do protótipo tem 321 regras de negócio, 138 requisitos funcionais e 136 não funcionais. A auditoria das regras e a revisão dos requisitos funcionais e não funcionais terminaram. O [resumo para confirmação](docs/requisitos/resumo-para-confirmacao.md) foi confirmado, e a [especificação](docs/requisitos/ERS.md) foi aprovada na versão 1.0, com 789 requisitos (173 funcionais, 501 regras de negócio e 115 não funcionais), hoje na versão 1.1. Agora as histórias de usuário da Entrega 1 viram [issues](https://github.com/DennerRR/octante/issues), um domínio por vez: o Encerramento, Usuários e acesso e o PMO estão prontos.
 
 ### Próximos passos
 
